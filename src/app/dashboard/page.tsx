@@ -4,28 +4,28 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
-import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { StatusBadge } from '@/components/ui/status-badge'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { useProjects } from '@/lib/hooks/useProjects'
+import { useTokens } from '@/lib/hooks/useTokens'
+import { TokenUsage } from '@/components/TokenUsage'
+import { TokenUpgradeModal } from '@/components/TokenUpgradeModal'
+import { TokenInsufficientModal } from '@/components/TokenInsufficientModal'
+import { NewProjectModal } from '@/components/NewProjectModal'
+import { ProjectCreationLoading } from '@/components/ProjectCreationLoading'
 import { 
   Plus, 
   FileText, 
   Calendar, 
   MoreHorizontal, 
-  Edit, 
   Trash2, 
   Eye,
   Loader2,
   LogOut,
   Download,
   RefreshCw,
-  AlertCircle,
-  MessageSquare,
-  Sparkles
+  AlertCircle
 } from 'lucide-react'
 import {
   DropdownMenu,
@@ -35,20 +35,39 @@ import {
 } from '@/components/ui/dropdown-menu'
 
 export default function DashboardPage() {
-  const [showCreateForm, setShowCreateForm] = useState(false)
-  const [newProject, setNewProject] = useState({
-    title: '',
-    outline_text: '',
-    language: 'en',
-    theme: 'default'
-  })
+  const [showCreateModal, setShowCreateModal] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [generatedComment, setGeneratedComment] = useState<string | null>(null)
-  const [generatingComment, setGeneratingComment] = useState(false)
+  const [showCreationLoading, setShowCreationLoading] = useState(false)
+  const [creatingProject, setCreatingProject] = useState<{
+    id: string;
+    title: string;
+  } | null>(null)
   const [migrationNeeded, setMigrationNeeded] = useState(false)
   const [migrationSQL, setMigrationSQL] = useState('')
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false)
+  const [showTokenInsufficientModal, setShowTokenInsufficientModal] = useState(false)
+  const [insufficientModalData, setInsufficientModalData] = useState<{
+    actionType: string;
+    requiredTokens: number;
+    availableTokens: number;
+  } | null>(null)
 
   const { user, loading: authLoading, initializing, signOut } = useAuth()
+  
+  // Load token data first (higher priority)
+  const { 
+    tokenInfo, 
+    usageHistory, 
+    usageStats, 
+    isLoading: tokensLoading, 
+    error: tokensError,
+    purchaseTokens,
+    updateSubscription,
+    checkTokensForAction,
+    refreshTokens
+  } = useTokens()
+  
+  // Load projects data (lower priority, but still parallel)
   const { projects, loading: projectsLoading, error: projectsError, createProjectWithAI, deleteProject, regenerateProject, exportProject } = useProjects(user?.id)
   const router = useRouter()
 
@@ -88,54 +107,78 @@ export default function DashboardPage() {
     return () => clearTimeout(timeoutId)
   }, [user])
 
-  const handleCreateProject = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleCreateProject = async (projectData: {
+    title: string;
+    outline_text: string;
+    language: string;
+    theme: string;
+  }) => {
     setLoading(true)
 
     console.log('Creating project with data:', {
-      title: newProject.title,
-      outline: newProject.outline_text,
-      language: newProject.language,
+      title: projectData.title,
+      outline: projectData.outline_text,
+      language: projectData.language,
+      theme: projectData.theme,
     })
     console.log('User authentication status:', { user: user?.id, email: user?.email })
-    console.log('Form validation - all fields filled:', {
-      title: !!newProject.title,
-      outline: !!newProject.outline_text,
-      language: !!newProject.language
-    })
     
     // Check if user is authenticated
     if (!user) {
       alert('Please log in to create a project')
       setLoading(false)
-      return
+      return { error: 'Not authenticated' }
     }
 
-    // Validate form data before sending
-    if (!newProject.title || !newProject.outline_text) {
-      alert('Please fill in both title and outline fields')
+    // Check if user has enough tokens
+    const tokenCheck = await checkTokensForAction('create_presentation')
+    if (!tokenCheck.hasEnoughTokens) {
+      setInsufficientModalData({
+        actionType: 'create_presentation',
+        requiredTokens: tokenCheck.requiredTokens || 10,
+        availableTokens: tokenCheck.availableTokens || 0
+      })
+      setShowTokenInsufficientModal(true)
       setLoading(false)
-      return
+      return { error: 'Insufficient tokens' }
     }
 
     try {
-      const { error } = await createProjectWithAI({
-        title: newProject.title,
-        outline_text: newProject.outline_text,
-        language: newProject.language,
+      const { data, error } = await createProjectWithAI({
+        title: projectData.title,
+        outline_text: projectData.outline_text,
+        language: projectData.language,
+        theme: projectData.theme,
       })
+      
       if (error) {
         console.error('Error creating project:', error)
-        alert(`Error: ${error}`)
+        setLoading(false)
+        return { error: error }
       } else {
-        setNewProject({ title: '', outline_text: '', language: 'en', theme: 'default' })
-        setShowCreateForm(false)
+        // Refresh token data after successful creation
+        refreshTokens()
+        
+        // Get the project ID from the response
+        const projectId = data?.project?.id
+        if (projectId) {
+          setLoading(false)
+          // Show the full-screen loading component
+          setCreatingProject({
+            id: projectId,
+            title: projectData.title
+          })
+          setShowCreationLoading(true)
+          return { projectId }
+        } else {
+          setLoading(false)
+          return { error: 'Project created but no ID returned' }
+        }
       }
     } catch (err) {
       console.error('Error creating project:', err)
-      alert(`Error: ${err instanceof Error ? err.message : 'Unknown error'}`)
-    } finally {
       setLoading(false)
+      return { error: err instanceof Error ? err.message : 'Unknown error' }
     }
   }
 
@@ -165,6 +208,18 @@ export default function DashboardPage() {
   }
 
   const handleExportProject = async (id: string) => {
+    // Check if user has enough tokens
+    const tokenCheck = await checkTokensForAction('export_presentation', id)
+    if (!tokenCheck.hasEnoughTokens) {
+      setInsufficientModalData({
+        actionType: 'export_presentation',
+        requiredTokens: tokenCheck.requiredTokens || 3,
+        availableTokens: tokenCheck.availableTokens || 0
+      })
+      setShowTokenInsufficientModal(true)
+      return
+    }
+
     try {
       const { data, error } = await exportProject(id)
       if (error) {
@@ -173,10 +228,50 @@ export default function DashboardPage() {
       } else if (data?.url) {
         // Open the download URL in a new tab
         window.open(data.url, '_blank')
+        // Refresh token data after successful export
+        refreshTokens()
       }
     } catch (err) {
       console.error('Error exporting project:', err)
       alert(`Error: ${err instanceof Error ? err.message : 'Unknown error'}`)
+    }
+  }
+
+  // Token-related handlers
+  const handleUpgradePlan = () => {
+    setShowUpgradeModal(true)
+  }
+
+  const handlePurchaseTokens = () => {
+    setShowUpgradeModal(true)
+  }
+
+  const handleViewTokenHistory = () => {
+    // Could implement a separate modal or navigate to a dedicated page
+    console.log('View token history')
+  }
+
+  const handleUpgradePlanAction = async (planId: string) => {
+    try {
+      await updateSubscription(planId as any)
+      setShowUpgradeModal(false)
+      // Show success message
+      alert(`Successfully upgraded to ${planId} plan!`)
+    } catch (error) {
+      console.error('Error upgrading plan:', error)
+      alert(`Error upgrading plan: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    }
+  }
+
+  const handlePurchaseTokensAction = async (packageId: string) => {
+    try {
+      await purchaseTokens(packageId)
+      setShowUpgradeModal(false)
+      // Show success message
+      alert('Tokens purchased successfully!')
+    } catch (error) {
+      console.error('Error purchasing tokens:', error)
+      alert(`Error purchasing tokens: ${error instanceof Error ? error.message : 'Unknown error'}`)
     }
   }
 
@@ -189,42 +284,20 @@ export default function DashboardPage() {
     }
   }
 
-  const handleGenerateComment = async () => {
-    if (!newProject.title || !newProject.outline_text) {
-      alert('Please fill in both title and outline before generating a comment')
-      return
-    }
-
-    setGeneratingComment(true)
-    setGeneratedComment(null)
-
-    try {
-      const response = await fetch('/api/generate-comment', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          title: newProject.title,
-          language: newProject.language,
-          outline: newProject.outline_text,
-        }),
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to generate comment')
-      }
-
-      setGeneratedComment(data.comment)
-    } catch (err) {
-      console.error('Error generating comment:', err)
-      alert(`Error: ${err instanceof Error ? err.message : 'Unknown error'}`)
-    } finally {
-      setGeneratingComment(false)
-    }
+  const handleCreationComplete = () => {
+    setShowCreationLoading(false)
+    setCreatingProject(null)
+    // Refresh projects to show the new one
+    // The useProjects hook will automatically refresh
   }
+
+  const handleCreationError = (error: string) => {
+    console.error('Project creation error:', error)
+    setShowCreationLoading(false)
+    setCreatingProject(null)
+    alert(`Project creation failed: ${error}`)
+  }
+
 
   // Debug logging
   console.log('Dashboard render state:', { 
@@ -269,11 +342,10 @@ export default function DashboardPage() {
             <Image 
               src="/slivoralogonoback.png" 
               alt="Slivora Logo" 
-              width={32} 
-              height={32}
-              className="h-8 w-8"
+              width={120} 
+              height={120}
+              className="h-23 w-23"
             />
-            <span className="text-sm sm:text-base font-semibold tracking-tight">Slivora</span>
           </div>
           
           <div className="flex items-center gap-4">
@@ -319,6 +391,19 @@ export default function DashboardPage() {
           </Card>
         )}
 
+        {/* Token Usage Section - Show first, even while loading */}
+        <div className="mb-8">
+          <TokenUsage
+            tokenInfo={tokenInfo}
+            usageHistory={usageHistory}
+            usageStats={usageStats}
+            onUpgrade={handleUpgradePlan}
+            onPurchaseTokens={handlePurchaseTokens}
+            onViewHistory={handleViewTokenHistory}
+            isLoading={tokensLoading}
+          />
+        </div>
+
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">My Projects</h1>
@@ -326,123 +411,12 @@ export default function DashboardPage() {
               Create and manage your AI-powered presentations
             </p>
           </div>
-          <Button onClick={() => setShowCreateForm(true)}>
+          <Button onClick={() => setShowCreateModal(true)}>
             <Plus className="h-4 w-4 mr-2" />
             New Project
           </Button>
         </div>
 
-        {/* Create Project Form */}
-        {showCreateForm && (
-          <Card className="mb-8">
-            <CardHeader>
-              <CardTitle>Create New Project</CardTitle>
-              <CardDescription>
-                Describe your presentation idea and let AI create the content
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleCreateProject} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="title">Project Title</Label>
-                    <Input
-                      id="title"
-                      placeholder="e.g., Q4 Sales Presentation"
-                      value={newProject.title}
-                      onChange={(e) => setNewProject({ ...newProject, title: e.target.value })}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="language">Language</Label>
-                    <Input
-                      id="language"
-                      placeholder="en"
-                      value={newProject.language}
-                      onChange={(e) => setNewProject({ ...newProject, language: e.target.value })}
-                    />
-                  </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="outline">Presentation Outline</Label>
-                  <Textarea
-                    id="outline"
-                    placeholder="Describe your presentation topic, key points, target audience, and any specific requirements..."
-                    value={newProject.outline_text}
-                    onChange={(e) => setNewProject({ ...newProject, outline_text: e.target.value })}
-                    rows={4}
-                    required
-                  />
-                </div>
-
-                {/* AI Comment Generation Section */}
-                <div className="space-y-3 p-4 bg-muted/30 rounded-lg border">
-                  <div className="flex items-center gap-2">
-                    <Sparkles className="h-4 w-4 text-primary" />
-                    <Label className="text-sm font-medium">AI Topic Comment</Label>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Get an AI-generated comment about your topic to help refine your presentation
-                  </p>
-                  
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={handleGenerateComment}
-                    disabled={generatingComment || !newProject.title || !newProject.outline_text}
-                    className="w-full"
-                  >
-                    {generatingComment ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Generating Comment...
-                      </>
-                    ) : (
-                      <>
-                        <MessageSquare className="mr-2 h-4 w-4" />
-                        Generate AI Comment
-                      </>
-                    )}
-                  </Button>
-
-                  {generatedComment && (
-                    <div className="mt-3 p-3 bg-background rounded-md border">
-                      <div className="flex items-start gap-2">
-                        <MessageSquare className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                        <div>
-                          <p className="text-sm font-medium text-foreground mb-1">AI Comment:</p>
-                          <p className="text-sm text-muted-foreground leading-relaxed">
-                            {generatedComment}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex gap-2">
-                  <Button type="submit" disabled={loading}>
-                    {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Create Project
-                  </Button>
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    onClick={() => {
-                      setShowCreateForm(false)
-                      setGeneratedComment(null)
-                    }}
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
-        )}
 
         {/* Projects Error */}
         {projectsError && (
@@ -477,7 +451,7 @@ export default function DashboardPage() {
               <p className="text-muted-foreground text-center mb-4">
                 Create your first AI-powered presentation to get started
               </p>
-              <Button onClick={() => setShowCreateForm(true)}>
+              <Button onClick={() => setShowCreateModal(true)}>
                 <Plus className="h-4 w-4 mr-2" />
                 Create Project
               </Button>
@@ -595,6 +569,51 @@ export default function DashboardPage() {
           </div>
         ) : null}
       </div>
+
+      {/* Token Upgrade Modal */}
+      <TokenUpgradeModal
+        isOpen={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        currentPlan={tokenInfo?.subscriptionPlan || 'free'}
+        currentTokens={tokenInfo?.totalAvailableTokens || 0}
+        onUpgradePlan={handleUpgradePlanAction as (planId: string) => Promise<void>}
+        onPurchaseTokens={handlePurchaseTokensAction}
+        isLoading={tokensLoading}
+      />
+
+      {/* Token Insufficient Modal */}
+      {insufficientModalData && (
+        <TokenInsufficientModal
+          isOpen={showTokenInsufficientModal}
+          onClose={() => setShowTokenInsufficientModal(false)}
+          actionType={insufficientModalData.actionType as 'create_presentation' | 'export_presentation' | 'add_edit_slide' | 'generate_analytics' | 'regenerate_slides'}
+          requiredTokens={insufficientModalData.requiredTokens}
+          availableTokens={insufficientModalData.availableTokens}
+          currentPlan={tokenInfo?.subscriptionPlan || 'free'}
+          onUpgradePlan={handleUpgradePlan}
+          onPurchaseTokens={handlePurchaseTokens}
+        />
+      )}
+
+      {/* New Project Modal */}
+      <NewProjectModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onSubmit={handleCreateProject}
+        loading={loading}
+        currentPlan={tokenInfo?.subscriptionPlan || 'free'}
+        onUpgradePlan={() => setShowUpgradeModal(true)}
+      />
+
+      {/* Project Creation Loading */}
+      {showCreationLoading && creatingProject && (
+        <ProjectCreationLoading
+          projectId={creatingProject.id}
+          projectTitle={creatingProject.title}
+          onComplete={handleCreationComplete}
+          onError={handleCreationError}
+        />
+      )}
     </div>
   )
 }

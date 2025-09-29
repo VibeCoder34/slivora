@@ -1,61 +1,9 @@
 import PptxGenJS from 'pptxgenjs';
 import { SlidePlan, Slide } from '../types/slide-plan';
-
-// ===============================
-// Eccentric theme configurations
-// ===============================
-const THEMES = {
-  cosmic: {
-    name: 'Cosmic Dreams',
-    fonts: { primary: 'Impact', secondary: 'Arial Black', accent: 'Comic Sans MS' },
-    sizes: { title: 48, h2: 36, bullet: 24, caption: 16 },
-    colors: {
-      primary: 'FF6B6B',
-      secondary: '4ECDC4',
-      accent: '45B7D1',
-      background: '1A1A2E',
-      text: 'FFFFFF',
-      muted: 'B0B0B0',
-    },
-  },
-  neon: {
-    name: 'Neon Cyberpunk',
-    fonts: { primary: 'Orbitron', secondary: 'Exo 2', accent: 'Rajdhani' },
-    sizes: { title: 52, h2: 38, bullet: 26, caption: 18 },
-    colors: {
-      primary: '00FFFF',
-      secondary: 'FF00FF',
-      accent: '00FF00',
-      background: '000000',
-      text: 'FFFFFF',
-      muted: '888888',
-    },
-  },
-  sunset: {
-    name: 'Sunset Vibes',
-    fonts: { primary: 'Montserrat', secondary: 'Open Sans', accent: 'Dancing Script' },
-    sizes: { title: 46, h2: 32, bullet: 22, caption: 16 },
-    colors: {
-      primary: 'FF6B35',
-      secondary: 'F7931E',
-      accent: 'FFD23F',
-      background: 'FFF8E1',
-      text: '2C3E50',
-      muted: '7F8C8D',
-    },
-  },
-} as const;
-
-// ===============
-// Theme helpers
-// ===============
-function getRandomTheme() {
-  const keys = Object.keys(THEMES) as (keyof typeof THEMES)[];
-  return THEMES[keys[Math.floor(Math.random() * keys.length)]];
-}
+import { THEMES, getTheme, getRandomTheme, ThemeConfig } from './themes';
 
 // NOTE: make it reassignable (we change the reference; we DO NOT mutate)
-let CURRENT_THEME = getRandomTheme();
+let CURRENT_THEME: ThemeConfig = getRandomTheme();
 
 // ===============
 // Util helpers
@@ -394,8 +342,11 @@ function createSlide(pptx: PptxGenJS, slide: Slide): void {
 // =====================
 // Public API
 // =====================
-export async function buildPptxBuffer(plan: SlidePlan): Promise<Buffer> {
+export async function buildPptxBuffer(plan: SlidePlan, themeKey?: string): Promise<Buffer> {
   const pptx = new PptxGenJS();
+
+  // Set the theme
+  CURRENT_THEME = themeKey ? getTheme(themeKey) : getRandomTheme();
 
   // Deck layout & meta
   pptx.defineLayout({ name: '16x9', width: 10, height: 5.625 });
@@ -408,10 +359,6 @@ export async function buildPptxBuffer(plan: SlidePlan): Promise<Buffer> {
 
   // Slides
   for (let i = 0; i < plan.slides.length; i++) {
-    // Optional variety every 3 slides (non-mutating: replace reference)
-    if (i > 0 && i % 3 === 0) {
-      CURRENT_THEME = getRandomTheme();
-    }
     createSlide(pptx, plan.slides[i]);
   }
 

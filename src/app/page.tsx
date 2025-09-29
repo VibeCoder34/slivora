@@ -234,11 +234,12 @@ export default function Home() {
               name="Free"
               price="$0"
               period="forever"
-              description="Perfect for trying out Presently"
+              description="Perfect for trying out SLIVORA"
               features={[
-                "3 presentations per month",
+                "50 tokens per month",
+                "Create presentations",
+                "Export to PDF",
                 "Basic templates",
-                "PDF export",
                 "Community support"
               ]}
               buttonText="Get started"
@@ -250,9 +251,10 @@ export default function Home() {
               period="per month"
               description="For professionals and small teams"
               features={[
-                "Unlimited presentations",
-                "Premium templates",
+                "500 tokens per month",
+                "10% token rollover",
                 "All export formats",
+                "Premium templates",
                 "Priority support",
                 "Custom branding"
               ]}
@@ -261,11 +263,13 @@ export default function Home() {
               popular={true}
             />
             <PricingCard 
-              name="Team"
+              name="Business"
               price="$49"
               period="per month"
               description="For growing organizations"
               features={[
+                "2,500 tokens per month",
+                "15% token rollover",
                 "Everything in Pro",
                 "Team collaboration",
                 "Advanced analytics",
@@ -290,6 +294,10 @@ export default function Home() {
           </div>
           <div className="grid gap-4 max-w-3xl mx-auto">
             <details className="rounded-md border p-6">
+              <summary className="cursor-pointer font-medium text-lg">How does the token system work?</summary>
+              <p className="mt-3 text-muted-foreground">SLIVORA uses a token-based pricing system. Each action (creating presentations, exporting, etc.) consumes a specific number of tokens. Free users get 50 tokens monthly, while paid plans offer more tokens and rollover benefits.</p>
+            </details>
+            <details className="rounded-md border p-6">
               <summary className="cursor-pointer font-medium text-lg">How does the AI create presentations?</summary>
               <p className="mt-3 text-muted-foreground">Our AI analyzes your topic, audience, and goals to create structured content with logical flow. It uses advanced language models to generate compelling bullet points, proper transitions, and professional formatting.</p>
             </details>
@@ -299,7 +307,7 @@ export default function Home() {
             </details>
             <details className="rounded-md border p-6">
               <summary className="cursor-pointer font-medium text-lg">What file formats can I export to?</summary>
-              <p className="mt-3 text-muted-foreground">You can export to PowerPoint (.pptx), PDF, and Google Slides. All formats maintain your design and formatting perfectly.</p>
+              <p className="mt-3 text-muted-foreground">You can export to PowerPoint (.pptx), PDF, and Google Slides. All formats maintain your design and formatting perfectly. Each export costs 3 tokens.</p>
             </details>
             <details className="rounded-md border p-6">
               <summary className="cursor-pointer font-medium text-lg">Is my data secure?</summary>

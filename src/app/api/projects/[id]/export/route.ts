@@ -5,6 +5,7 @@ import { buildPptxBuffer } from '@/lib/pptx';
 import { hitRateLimit } from '@/lib/rateLimit';
 import { ErrorResponse } from '@/types/slide-plan';
 import { SlidePlan } from '@/types/slide-plan';
+import { checkUserTokens, deductTokens } from '@/lib/token-system';
 
 // Rate limiting configuration
 const EXPORT_RATE_LIMIT = {
@@ -111,6 +112,18 @@ export async function POST(
       return NextResponse.json(errorResponse, { status: 400 });
     }
     
+    // Check if user has enough tokens for export
+    const tokenCheck = await checkUserTokens(user.id, 'export_presentation', projectId);
+    if (!tokenCheck.hasEnoughTokens) {
+      return NextResponse.json({
+        error: 'Insufficient tokens',
+        message: tokenCheck.message,
+        currentPlan: tokenCheck.currentPlan,
+        availableTokens: tokenCheck.availableTokens,
+        requiredTokens: tokenCheck.requiredTokens,
+      }, { status: 402 }); // 402 Payment Required
+    }
+    
     // Parse slide plan
     let slidePlan: SlidePlan;
     try {
@@ -127,7 +140,7 @@ export async function POST(
       console.log('Starting PowerPoint generation...');
       console.log('Slide plan:', JSON.stringify(slidePlan, null, 2));
       
-      const buffer = await buildPptxBuffer(slidePlan);
+      const buffer = await buildPptxBuffer(slidePlan, project.theme);
       console.log('PowerPoint generation completed, buffer size:', buffer.length);
       
       // Create filename
@@ -184,11 +197,25 @@ export async function POST(
         // Don't fail the request, just log the error
       }
       
+      // Deduct tokens for successful export
+      const tokenDeduction = await deductTokens(user.id, 'export_presentation', projectId, {
+        filename,
+        format: 'pptx',
+        slideCount: slidePlan.slides.length
+      });
+      
+      if (!tokenDeduction.success) {
+        console.error('Failed to deduct tokens:', tokenDeduction.error);
+        // Don't fail the request, but log the error for monitoring
+      }
+      
       // Return the download URL
       return NextResponse.json({
         url: signedUrlData.signedUrl,
         filename,
         remaining: rateLimitResult.remaining,
+        tokensDeducted: tokenDeduction.tokensDeducted,
+        remainingTokens: tokenDeduction.remainingTokens,
       });
       
     } catch (generationError) {

@@ -3,6 +3,8 @@ import { createClient } from '@/lib/supabase/server';
 import { generateSlidePlan } from '@/lib/llm';
 import { hitRateLimit } from '@/lib/rateLimit';
 import { GenerateRequestSchema, formatValidationErrors, ErrorResponse } from '@/types/slide-plan';
+import { checkUserTokens, deductTokens } from '@/lib/token-system';
+import { isThemeAvailableForPlan, SubscriptionPlan } from '@/lib/config/pricing';
 
 // Rate limiting configuration
 const GENERATE_RATE_LIMIT = {
@@ -70,7 +72,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(errorResponse, { status: 422 });
     }
     
-    const { title, language, outline } = validationResult.data;
+    const { title, language, outline, theme } = validationResult.data;
     
     // Get authenticated user
     console.log('Creating Supabase client...');
@@ -91,6 +93,28 @@ export async function POST(request: NextRequest) {
         error: 'Unauthorized',
       };
       return NextResponse.json(errorResponse, { status: 401 });
+    }
+    
+    // Check if user has enough tokens for creating a presentation
+    const tokenCheck = await checkUserTokens(user.id, 'create_presentation');
+    if (!tokenCheck.hasEnoughTokens) {
+      return NextResponse.json({
+        error: 'Insufficient tokens',
+        message: tokenCheck.message,
+        currentPlan: tokenCheck.currentPlan,
+        availableTokens: tokenCheck.availableTokens,
+        requiredTokens: tokenCheck.requiredTokens,
+      }, { status: 402 }); // 402 Payment Required
+    }
+
+    // Validate theme availability for user's plan
+    const userPlan = tokenCheck.currentPlan as SubscriptionPlan;
+    if (!isThemeAvailableForPlan(theme || 'minimal', userPlan)) {
+      return NextResponse.json({
+        error: 'Theme not available',
+        message: `The selected theme is not available for your current plan (${userPlan}). Please upgrade to access all themes.`,
+        currentPlan: userPlan,
+      }, { status: 403 }); // 403 Forbidden
     }
     
     // Get client IP for rate limiting
@@ -120,6 +144,7 @@ export async function POST(request: NextRequest) {
         title,
         outline_text: outline,
         language,
+        theme: theme || 'minimal',
         slide_count: 0,
         status: 'generating', // Set status to generating
       })
@@ -241,11 +266,25 @@ export async function POST(request: NextRequest) {
         }
       }
       
+      // Deduct tokens for successful presentation creation
+      const tokenDeduction = await deductTokens(user.id, 'create_presentation', project.id, {
+        title,
+        language,
+        slideCount: slidePlan.slides.length
+      });
+      
+      if (!tokenDeduction.success) {
+        console.error('Failed to deduct tokens:', tokenDeduction.error);
+        // Don't fail the request, but log the error for monitoring
+      }
+      
       // Return the project and plan
       return NextResponse.json({
         project: updatedProject,
         plan: slidePlan,
         remaining: rateLimitResult.remaining,
+        tokensDeducted: tokenDeduction.tokensDeducted,
+        remainingTokens: tokenDeduction.remainingTokens,
       });
       
     } catch (generationError) {

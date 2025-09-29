@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { generateSlidePlan } from '@/lib/llm';
 import { hitRateLimit } from '@/lib/rateLimit';
 import { ErrorResponse } from '@/types/slide-plan';
+import { checkUserTokens, deductTokens } from '@/lib/token-system';
 
 // Rate limiting configuration
 const GENERATE_RATE_LIMIT = {
@@ -89,6 +90,18 @@ export async function POST(
       return NextResponse.json(errorResponse, { status: 404 });
     }
     
+    // Check if user has enough tokens for regenerating slides
+    const tokenCheck = await checkUserTokens(user.id, 'regenerate_slides', projectId);
+    if (!tokenCheck.hasEnoughTokens) {
+      return NextResponse.json({
+        error: 'Insufficient tokens',
+        message: tokenCheck.message,
+        currentPlan: tokenCheck.currentPlan,
+        availableTokens: tokenCheck.availableTokens,
+        requiredTokens: tokenCheck.requiredTokens,
+      }, { status: 402 }); // 402 Payment Required
+    }
+    
     // Set project status to generating
     const { error: updateStatusError } = await supabase
       .from('projects')
@@ -146,11 +159,24 @@ export async function POST(
         return NextResponse.json(errorResponse, { status: 500 });
       }
       
+      // Deduct tokens for successful slide regeneration
+      const tokenDeduction = await deductTokens(user.id, 'regenerate_slides', projectId, {
+        title: project.title,
+        slideCount: slidePlan.slides.length
+      });
+      
+      if (!tokenDeduction.success) {
+        console.error('Failed to deduct tokens:', tokenDeduction.error);
+        // Don't fail the request, but log the error for monitoring
+      }
+      
       // Return the updated project and plan
       return NextResponse.json({
         project: updatedProject,
         plan: slidePlan,
         remaining: rateLimitResult.remaining,
+        tokensDeducted: tokenDeduction.tokensDeducted,
+        remainingTokens: tokenDeduction.remainingTokens,
       });
       
     } catch (generationError) {

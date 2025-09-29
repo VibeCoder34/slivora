@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS public.projects (
   title TEXT NOT NULL,
   outline_text TEXT NOT NULL,
   language TEXT DEFAULT 'en',
-  theme TEXT DEFAULT 'default',
+  theme TEXT DEFAULT 'minimal',
   slide_count INTEGER DEFAULT 0,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );

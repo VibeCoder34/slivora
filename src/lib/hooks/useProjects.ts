@@ -94,6 +94,7 @@ export function useProjects(userId?: string) {
     title: string
     outline_text: string
     language?: string
+    theme?: string
   }) => {
     try {
       setError(null)
@@ -102,6 +103,7 @@ export function useProjects(userId?: string) {
         title: projectData.title,
         outline: projectData.outline_text, // Map outline_text to outline for API
         language: projectData.language || 'en',
+        theme: projectData.theme || 'minimal',
       }
       
       console.log('Sending request body:', requestBody)
@@ -403,7 +405,10 @@ export function useProjects(userId?: string) {
 
   useEffect(() => {
     console.log('useProjects: useEffect triggered, calling fetchProjects')
-    fetchProjects()
+    // Start loading immediately when userId is available
+    if (userId) {
+      fetchProjects()
+    }
   }, [userId])
 
   return {

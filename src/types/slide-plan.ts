@@ -43,6 +43,7 @@ export const GenerateRequestSchema = z.object({
   title: z.string().min(1, 'Title is required').max(120, 'Title must be 120 characters or less'),
   language: z.string().min(2, 'Language must be at least 2 characters').max(40, 'Language must be 40 characters or less'),
   outline: z.string().min(1, 'Outline is required'),
+  theme: z.string().min(1, 'Theme is required').optional(),
 });
 
 export type GenerateRequest = z.infer<typeof GenerateRequestSchema>;
