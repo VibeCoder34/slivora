@@ -88,7 +88,7 @@ export default function SignInPage() {
       const { error } = await signIn(email, password)
       if (error) {
         console.log('Sign in error:', error)
-        setError(error.message)
+        setError(error instanceof Error ? error.message : 'An error occurred')
       } else {
         console.log('Sign in successful, redirecting to dashboard...')
         // Small delay to ensure state is updated
@@ -248,7 +248,7 @@ export default function SignInPage() {
 
             <div className="text-center space-y-3">
               <div className="text-sm text-[var(--muted-foreground)]">
-                Don't have an account?
+                Don&apos;t have an account?
               </div>
               <Link href="/auth/signup" className="block">
                 <Button

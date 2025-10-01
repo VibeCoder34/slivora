@@ -70,7 +70,7 @@ export async function GET(request: NextRequest) {
     );
 
     // Return the PPTX file as a downloadable response
-    return new NextResponse(pptxBuffer as any, {
+    return new NextResponse(pptxBuffer as BodyInit, {
       status: 200,
       headers: {
         'Content-Type': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',

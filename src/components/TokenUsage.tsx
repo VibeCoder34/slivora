@@ -36,7 +36,7 @@ interface TokenUsageHistory {
     action_type: ActionType;
     tokens_consumed: number;
     project_id: string | null;
-    metadata: any;
+    metadata: Record<string, unknown>;
     created_at: string;
   }>;
   totalPages: number;

@@ -72,7 +72,7 @@ const DialogContent = React.forwardRef<
       document.removeEventListener("keydown", handleEscape)
       document.body.style.overflow = "unset"
     }
-  }, [context.open, context.onOpenChange])
+  }, [context])
 
   if (!context.open) return null
 

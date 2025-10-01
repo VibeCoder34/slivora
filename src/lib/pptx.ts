@@ -103,7 +103,7 @@ function addBullets(slideObj: PptxGenJS.Slide, bullets: string[], yStart: number
     },
   }));
 
-  slideObj.addText(paragraphs as any, {
+  slideObj.addText(paragraphs, {
     x: SAFE.x,
     y: yStart,
     w: CONTENT_W,
@@ -435,7 +435,7 @@ export async function buildPptxBuffer(
 
   // References slide if not already included and references exist
   const hasReferencesSlide = plan.slides.some(s => s.title && /references/i.test(s.title));
-  if (!hasReferencesSlide && Array.isArray((plan as any).references) && (plan as any).references.length > 0) {
+  if (!hasReferencesSlide && 'references' in plan && Array.isArray(plan.references) && plan.references.length > 0) {
     const sRef = pptx.addSlide();
     sRef.background = { color: CURRENT_THEME.colors.background };
     sRef.addText('References', {
@@ -448,7 +448,7 @@ export async function buildPptxBuffer(
       color: CURRENT_THEME.colors.text,
       bold: true,
     });
-    const refs: Array<{ url: string; label?: string }> = (plan as any).references;
+    const refs: Array<{ url: string; label?: string }> = plan.references as Array<{ url: string; label?: string }>;
 
     // Add each reference as a clickable link
     refs.forEach((ref, index) => {

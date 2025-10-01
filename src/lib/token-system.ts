@@ -114,7 +114,7 @@ export async function deductTokens(
   userId: string,
   actionType: ActionType,
   projectId?: string,
-  metadata?: Record<string, any>
+  metadata?: Record<string, unknown>
 ): Promise<TokenDeductionResult> {
   try {
     const supabase = await createClient();

@@ -77,7 +77,7 @@ export default function ProjectPage() {
       
       // If project has AI-generated slides, use those
       if (projectData.slide_plan && projectData.slide_plan.slides) {
-        const aiSlides = projectData.slide_plan.slides.map((slide: any, index: number) => ({
+        const aiSlides = projectData.slide_plan.slides.map((slide: unknown, index: number) => ({
           id: slide.id || `slide-${index}`,
           project_id: projectId,
           slide_number: index + 1,

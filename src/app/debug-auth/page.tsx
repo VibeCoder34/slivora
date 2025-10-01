@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useState, useEffect } from 'react'
 
 export default function DebugAuthPage() {
-  const { user, loading, signIn, signUp, clearAuthData, triggerFallback, debugAuthState } = useAuth()
+  const { user, loading, signIn, signUp, clearAuthData } = useAuth()
   const [session, setSession] = useState<any>(null)
   const [testEmail, setTestEmail] = useState('')
   const [testPassword, setTestPassword] = useState('')

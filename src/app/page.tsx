@@ -287,7 +287,7 @@ export default function Home() {
           
           <div className="grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-4 max-w-7xl mx-auto">
             {Object.values(SUBSCRIPTION_PLANS).map((plan) => {
-              const isContact = (plan as any).contactUs === true;
+              const isContact = 'contactUs' in plan && plan.contactUs === true;
               const displayPrice = isContact
                 ? 'Contact us'
                 : plan.price === 0
@@ -545,7 +545,7 @@ function Testimonial({ name, role, company, content, rating }: {
             <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
           ))}
         </div>
-        <p className="text-sm text-muted-foreground mb-4">"{content}"</p>
+        <p className="text-sm text-muted-foreground mb-4">&ldquo;{content}&rdquo;</p>
         <div>
           <div className="font-medium">{name}</div>
           <div className="text-sm text-muted-foreground">{role} at {company}</div>

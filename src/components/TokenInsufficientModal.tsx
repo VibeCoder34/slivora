@@ -77,7 +77,7 @@ export function TokenInsufficientModal({
             <DialogTitle>Insufficient Tokens</DialogTitle>
           </div>
           <DialogDescription>
-            You don't have enough tokens to {getActionDisplayName(actionType).toLowerCase()}
+            You don&apos;t have enough tokens to {getActionDisplayName(actionType).toLowerCase()}
           </DialogDescription>
         </DialogHeader>
 

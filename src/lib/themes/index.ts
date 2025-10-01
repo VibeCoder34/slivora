@@ -7,6 +7,7 @@ import { creativeTheme } from './creative';
 import { cosmicTheme } from './cosmic';
 import { neonTheme } from './neon';
 import { sunsetTheme } from './sunset';
+import { getAvailableThemesForPlan } from '../config/pricing';
 
 export const THEMES: Record<ThemeKey, ThemeConfig> = {
   minimal: minimalTheme,
@@ -31,7 +32,6 @@ export function getRandomTheme(): ThemeConfig {
 
 export function isThemeAvailableForPlan(themeKey: string, planId: string): boolean {
   // This will be imported from the pricing config
-  const { getAvailableThemesForPlan } = require('../config/pricing');
   const availableThemes = getAvailableThemesForPlan(planId);
   return availableThemes.includes(themeKey);
 }

@@ -32,7 +32,7 @@ export function clearAuthStorage() {
 /**
  * Check if the current error is related to invalid tokens
  */
-export function isTokenError(error: any): boolean {
+export function isTokenError(error: unknown): boolean {
   if (!error) return false
   
   const message = error.message || error.toString()

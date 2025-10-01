@@ -310,7 +310,7 @@ export default function DashboardPage() {
 
   const handleUpgradePlanAction = async (planId: string) => {
     try {
-      await updateSubscription(planId as any)
+      await updateSubscription(planId as 'free' | 'pro' | 'business' | 'enterprise')
       setShowUpgradeModal(false)
       // Show success message
       alert(`Successfully upgraded to ${planId} plan!`)

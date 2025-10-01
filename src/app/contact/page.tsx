@@ -63,14 +63,14 @@ export default function ContactPage() {
 
         <div className="text-center mb-10">
           <h1 className="text-3xl sm:text-4xl font-bold">Contact us</h1>
-          <p className="mt-3 text-[var(--muted-foreground)]">We'd love to hear from you. Send us a message and we'll respond soon.</p>
+          <p className="mt-3 text-[var(--muted-foreground)]">We&apos;d love to hear from you. Send us a message and we&apos;ll respond soon.</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card className="bg-[var(--card)] border border-[var(--border)]">
             <CardHeader>
               <CardTitle>Send a message</CardTitle>
-              <CardDescription>Fill out the form and we'll get back to you.</CardDescription>
+              <CardDescription>Fill out the form and we&apos;ll get back to you.</CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-4">
@@ -93,7 +93,7 @@ export default function ContactPage() {
                 <Button type="submit" className="w-full h-12" disabled={submitting}>{submitting ? "Sending..." : "Send message"}</Button>
                 {submitted && (
                   <div className="text-sm text-green-600 bg-green-50 dark:bg-green-900/20 p-3 rounded-md">
-                    Thanks! Your message has been sent successfully. We'll get back to you soon.
+                    Thanks! Your message has been sent successfully. We&apos;ll get back to you soon.
                   </div>
                 )}
               </form>

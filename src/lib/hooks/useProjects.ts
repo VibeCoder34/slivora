@@ -12,7 +12,7 @@ export interface Project {
   theme: string
   slide_count: number
   status: 'draft' | 'generating' | 'ready' | 'error'
-  slide_plan: any | null
+  slide_plan: Record<string, unknown> | null
   slides_count: number
   last_generated_at: string | null
   generate_error: string | null

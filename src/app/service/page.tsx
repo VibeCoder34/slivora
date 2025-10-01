@@ -131,7 +131,7 @@ export default function ServicePage() {
                     Generate Presentation
                   </CardTitle>
                   <CardDescription>
-                    Describe your presentation topic and we'll create professional slides for you.
+                    Describe your presentation topic and we&apos;ll create professional slides for you.
                   </CardDescription>
                 </CardHeader>
                 <CardContent>

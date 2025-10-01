@@ -17,7 +17,7 @@ export function useAuth() {
   const [initializing, setInitializing] = useState(true)
   const [supabaseError, setSupabaseError] = useState<string | null>(null)
   
-  let supabase: any = null
+  let supabase: ReturnType<typeof createClient> | null = null
   try {
     supabase = createClient()
   } catch (error) {
@@ -124,7 +124,7 @@ export function useAuth() {
     initializeAuth()
 
     // Listen for auth changes
-    let subscription: any = null
+    let subscription: { unsubscribe: () => void } | null = null
     if (supabase) {
       const { data: { subscription: sub } } = supabase.auth.onAuthStateChange(
         async (event, session) => {
@@ -174,7 +174,7 @@ export function useAuth() {
         subscription.unsubscribe()
       }
     }
-  }, [])
+  }, [supabase])
 
   const signUp = async (email: string, password: string, name?: string) => {
     if (!supabase) {

@@ -105,7 +105,7 @@ Please return ONLY the corrected JSON object.`;
     
     // Ensure each slide has an ID
     if (parsed.slides && Array.isArray(parsed.slides)) {
-      parsed.slides = parsed.slides.map((slide: any, index: number) => ({
+      parsed.slides = parsed.slides.map((slide: unknown, index: number) => ({
         ...slide,
         id: slide.id || `slide-${index + 1}`
       }));
@@ -127,7 +127,7 @@ export async function generateSlidePlan({
   language,
   outline,
 }: GenerateRequest): Promise<SlidePlan> {
-  let response: any = null;
+  let response: unknown = null;
   
   try {
     const userPrompt = createUserPrompt(title, language, outline);
@@ -161,7 +161,7 @@ export async function generateSlidePlan({
 
     // Ensure each slide has an ID
     if (parsed.slides && Array.isArray(parsed.slides)) {
-      parsed.slides = parsed.slides.map((slide: any, index: number) => ({
+      parsed.slides = parsed.slides.map((slide: unknown, index: number) => ({
         ...slide,
         id: slide.id || `slide-${index + 1}`
       }));
@@ -246,7 +246,7 @@ Goals:
 
     // Ensure slide IDs remain present after refinement
     if (parsed.slides && Array.isArray(parsed.slides)) {
-      parsed.slides = parsed.slides.map((slide: any, index: number) => ({
+      parsed.slides = parsed.slides.map((slide: unknown, index: number) => ({
         ...slide,
         id: slide.id || `slide-${index + 1}`,
       }));

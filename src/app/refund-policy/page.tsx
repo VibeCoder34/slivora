@@ -134,7 +134,7 @@ export default function RefundPolicyPage() {
                   </div>
                   <div>
                     <h3 className="font-semibold">Review Process</h3>
-                    <p className="text-muted-foreground">We'll review your request within 2-3 business days and verify your eligibility</p>
+                    <p className="text-muted-foreground">We&apos;ll review your request within 2-3 business days and verify your eligibility</p>
                   </div>
                 </div>
                 
@@ -156,7 +156,7 @@ export default function RefundPolicyPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Shield className="h-5 w-5" />
-                What's Not Refundable
+                What&apos;s Not Refundable
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -216,7 +216,7 @@ export default function RefundPolicyPage() {
               <div className="space-y-4">
                 <p className="text-muted-foreground">
                   If you have questions about our refund policy or need assistance with a refund request, 
-                  please don't hesitate to contact us.
+                  please don&apos;t hesitate to contact us.
                 </p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
@@ -248,7 +248,7 @@ export default function RefundPolicyPage() {
             <CardContent>
               <p className="text-yellow-700 dark:text-yellow-300">
                 We reserve the right to update this refund policy at any time. Any changes will be posted on this page 
-                with an updated "Last modified" date. Continued use of our service after any changes constitutes 
+                with an updated &ldquo;Last modified&rdquo; date. Continued use of our service after any changes constitutes 
                 acceptance of the new policy.
               </p>
             </CardContent>

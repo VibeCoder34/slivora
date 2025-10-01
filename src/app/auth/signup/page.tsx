@@ -89,7 +89,7 @@ export default function SignUpPage() {
       const { error } = await signUp(email, password, name)
       if (error) {
         console.log('Sign up error:', error)
-        setError(error.message)
+        setError(error instanceof Error ? error.message : 'An error occurred')
       } else {
         console.log('Sign up successful, redirecting to dashboard...')
         // Small delay to ensure state is updated

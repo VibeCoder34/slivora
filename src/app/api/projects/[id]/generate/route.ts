@@ -95,10 +95,7 @@ export async function POST(
     if (!tokenCheck.hasEnoughTokens) {
       const errorResponse: ErrorResponse = {
         error: 'Insufficient tokens',
-        message: tokenCheck.message,
-        currentPlan: tokenCheck.currentPlan,
-        availableTokens: tokenCheck.availableTokens,
-        requiredTokens: tokenCheck.requiredTokens,
+        issues: tokenCheck.message ? [tokenCheck.message] : undefined,
       };
       return NextResponse.json(errorResponse, { status: 402 }); // 402 Payment Required
     }
