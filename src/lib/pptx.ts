@@ -5,6 +5,14 @@ import { THEMES, getTheme, getRandomTheme, ThemeConfig } from './themes';
 // NOTE: make it reassignable (we change the reference; we DO NOT mutate)
 let CURRENT_THEME: ThemeConfig = getRandomTheme();
 
+// ===== watermark logo state =====
+let WATERMARK_LOGO_DATAURL: string | undefined;
+
+/** Dışarıdan base64 data URL veririz: "data:image/png;base64,...." */
+export function setWatermarkLogo(dataUrl: string) {
+  WATERMARK_LOGO_DATAURL = dataUrl;
+}
+
 // ===============
 // Util helpers
 // ===============
@@ -112,7 +120,7 @@ function addBullets(slideObj: PptxGenJS.Slide, bullets: string[], yStart: number
 // =====================
 
 // ---- Title ----
-function createTitleSlide(pptx: PptxGenJS, slide: Slide): void {
+function createTitleSlide(pptx: PptxGenJS, slide: Slide, userPlan: string = 'free'): void {
   const s = pptx.addSlide();
   const t = CURRENT_THEME;
 
@@ -131,10 +139,13 @@ function createTitleSlide(pptx: PptxGenJS, slide: Slide): void {
   // Tiny sparkles
   s.addShape('rect', { x: 1.5, y: 4.6, w: 0.28, h: 0.28, fill: { color: t.colors.accent }, rotate: 45 });
   s.addShape('rect', { x: 8.2, y: 4.6, w: 0.28, h: 0.28, fill: { color: t.colors.primary }, rotate: 45 });
+
+  // Add watermark for Free users
+  addWatermark(s, userPlan);
 }
 
 // ---- Title + Bullets ----
-function createTitleBulletsSlide(pptx: PptxGenJS, slide: Slide): void {
+function createTitleBulletsSlide(pptx: PptxGenJS, slide: Slide, userPlan: string = 'free'): void {
   const s = pptx.addSlide();
   const t = CURRENT_THEME;
 
@@ -172,10 +183,13 @@ function createTitleBulletsSlide(pptx: PptxGenJS, slide: Slide): void {
   // Floating accents
   s.addShape('rect', { x: 8.5, y: 4.5, w: 0.35, h: 0.35, fill: { color: t.colors.accent, transparency: 40 }, rotate: 45 });
   s.addShape('triangle', { x: 0.55, y: 4.75, w: 0.28, h: 0.28, fill: { color: t.colors.primary, transparency: 50 }, rotate: 30 });
+
+  // Add watermark for Free users
+  addWatermark(s, userPlan);
 }
 
 // ---- Section Divider ----
-function createSectionSlide(pptx: PptxGenJS, slide: Slide): void {
+function createSectionSlide(pptx: PptxGenJS, slide: Slide, userPlan: string = 'free'): void {
   const s = pptx.addSlide();
   const t = CURRENT_THEME;
 
@@ -197,10 +211,13 @@ function createSectionSlide(pptx: PptxGenJS, slide: Slide): void {
   // Corner accents
   s.addShape('rect', { x: 0.5, y: 0.5, w: 0.45, h: 0.45, fill: { color: t.colors.accent }, rotate: 45 });
   s.addShape('rect', { x: 9, y: 5, w: 0.45, h: 0.45, fill: { color: t.colors.primary }, rotate: 45 });
+
+  // Add watermark for Free users
+  addWatermark(s, userPlan);
 }
 
 // ---- Quote ----
-function createQuoteSlide(pptx: PptxGenJS, slide: Slide): void {
+function createQuoteSlide(pptx: PptxGenJS, slide: Slide, userPlan: string = 'free'): void {
   const s = pptx.addSlide();
   const t = CURRENT_THEME;
 
@@ -267,10 +284,13 @@ function createQuoteSlide(pptx: PptxGenJS, slide: Slide): void {
   s.addShape('rect', { x: 0.5, y: 1.5, w: 0.28, h: 0.28, fill: { color: t.colors.accent }, rotate: 45 });
   s.addShape('rect', { x: 9.2, y: 4.2, w: 0.28, h: 0.28, fill: { color: t.colors.primary }, rotate: 45 });
   s.addShape('rect', { x: 2, y: 5.05, w: 6, h: 0.12, fill: { color: t.colors.accent } });
+
+  // Add watermark for Free users
+  addWatermark(s, userPlan);
 }
 
 // ---- Image-focused (title + decorative frame; image insertion left to caller) ----
-function createImageSlide(pptx: PptxGenJS, slide: Slide): void {
+function createImageSlide(pptx: PptxGenJS, slide: Slide, userPlan: string = 'free'): void {
   const s = pptx.addSlide();
   const t = CURRENT_THEME;
 
@@ -306,47 +326,98 @@ function createImageSlide(pptx: PptxGenJS, slide: Slide): void {
   s.addShape('ellipse', { x: 8.5, y: 0.2, w: 0.5, h: 0.5, fill: { color: t.colors.primary } });
   s.addShape('triangle', { x: 0.2, y: 4.8, w: 0.4, h: 0.4, fill: { color: t.colors.secondary }, rotate: 45 });
 
-  // If you want to actually place an image from slide data:
-  // if (slide.imagePath) {
-  //   s.addImage({ path: slide.imagePath, x: 1.2, y: 1.9, w: 7.6, h: 3.0 });
-  // }
+  // Add watermark for Free users
+  addWatermark(s, userPlan);
 }
 
 // =====================
 // Layout router
 // =====================
-function createSlide(pptx: PptxGenJS, slide: Slide): void {
+function createSlide(pptx: PptxGenJS, slide: Slide, userPlan: string = 'free'): void {
   const layout = (slide.layout || 'title-bullets') as Slide['layout'];
 
   switch (layout) {
     case 'title':
-      createTitleSlide(pptx, slide);
+      createTitleSlide(pptx, slide, userPlan);
       break;
     case 'title-bullets':
-      createTitleBulletsSlide(pptx, slide);
+      createTitleBulletsSlide(pptx, slide, userPlan);
       break;
     case 'section':
-      createSectionSlide(pptx, slide);
+      createSectionSlide(pptx, slide, userPlan);
       break;
     case 'quote':
-      createQuoteSlide(pptx, slide);
+      createQuoteSlide(pptx, slide, userPlan);
       break;
     case 'image':
-      createImageSlide(pptx, slide);
+      createImageSlide(pptx, slide, userPlan);
       break;
     default:
-      createTitleBulletsSlide(pptx, slide);
+      createTitleBulletsSlide(pptx, slide, userPlan);
+  }
+}
+
+// =====================
+// Watermark helper (LOGO tabanlı, transparan)
+// =====================
+function addWatermark(slideObj: PptxGenJS.Slide, userPlan: string): void {
+  // Only add watermark for Free users
+  if (userPlan !== 'free') return;
+
+  // Slayt boyutu (pptx.defineLayout ile eşleşmeli)
+  const slideW = 10;       // 16:9 width
+  const slideH = 5.625;    // 16:9 height
+
+  // Watermark görünümü: ortada büyük, saydam logo
+  const wmW = 4.0;         // genişlik (inç) - daha küçük
+  const wmH = 4.0;         // yükseklik (inç) - daha küçük
+  const x = (slideW - wmW) / 2;  // tam ortada
+  const y = (slideH - wmH) / 2;  // tam ortada
+
+  if (WATERMARK_LOGO_DATAURL) {
+    // PNG logo şeffaflığı (pptxgenjs transparency: 0-100)
+    slideObj.addImage({
+      data: WATERMARK_LOGO_DATAURL,
+      x, y, w: wmW, h: wmH,
+      transparency: 75,   // %75 transparency = %25 opacity (daha görünür)
+      rotate: -15,        // hafif diyagonal watermark görünümü
+    });
+  } else {
+    // Fallback: logo gelmezse basit metin damgası
+    slideObj.addText('Slivora', {
+      x, y, w: wmW, h: wmH,
+      fontFace: 'Inter',
+      fontSize: 80,
+      color: '000000',
+      bold: true,
+      italic: true,
+      align: 'center',
+      valign: 'middle',
+      rotate: -15,
+      transparency: 75,   // ≈ %25 görünürlük
+      fit: 'shrink',
+    });
   }
 }
 
 // =====================
 // Public API
 // =====================
-export async function buildPptxBuffer(plan: SlidePlan, themeKey?: string): Promise<Buffer> {
+export async function buildPptxBuffer(
+  plan: SlidePlan,
+  themeKey?: string,
+  userPlan: string = 'free',
+  opts?: { watermarkLogoDataUrl?: string }
+): Promise<Buffer> {
   const pptx = new PptxGenJS();
 
   // Set the theme
   CURRENT_THEME = themeKey ? getTheme(themeKey) : getRandomTheme();
+
+  // (Yeni) watermark logo set et
+  if (opts?.watermarkLogoDataUrl) {
+    setWatermarkLogo(opts.watermarkLogoDataUrl);
+  }
 
   // Deck layout & meta
   pptx.defineLayout({ name: '16x9', width: 10, height: 5.625 });
@@ -359,7 +430,48 @@ export async function buildPptxBuffer(plan: SlidePlan, themeKey?: string): Promi
 
   // Slides
   for (let i = 0; i < plan.slides.length; i++) {
-    createSlide(pptx, plan.slides[i]);
+    createSlide(pptx, plan.slides[i], userPlan);
+  }
+
+  // References slide if not already included and references exist
+  const hasReferencesSlide = plan.slides.some(s => s.title && /references/i.test(s.title));
+  if (!hasReferencesSlide && Array.isArray((plan as any).references) && (plan as any).references.length > 0) {
+    const sRef = pptx.addSlide();
+    sRef.background = { color: CURRENT_THEME.colors.background };
+    sRef.addText('References', {
+      x: 0.6,
+      y: 0.5,
+      w: 8.8,
+      h: 0.8,
+      fontSize: CURRENT_THEME.sizes.h2,
+      fontFace: CURRENT_THEME.fonts.primary,
+      color: CURRENT_THEME.colors.text,
+      bold: true,
+    });
+    const refs: Array<{ url: string; label?: string }> = (plan as any).references;
+
+    // Add each reference as a clickable link
+    refs.forEach((ref, index) => {
+      const yPosition = 1.4 + (index * 0.4); // Space each reference vertically
+      const displayText = ref.label || ref.url;
+
+      sRef.addText(`• ${displayText}`, {
+        x: 0.6,
+        y: yPosition,
+        w: 8.8,
+        h: 0.35,
+        fontSize: CURRENT_THEME.sizes.bullet,
+        fontFace: CURRENT_THEME.fonts.secondary,
+        color: '0066CC', // Blue color for links
+        valign: 'top',
+        hyperlink: {
+          url: ref.url,
+          tooltip: `Visit ${ref.url}`,
+        },
+      });
+    });
+    // Add watermark for Free users
+    addWatermark(sRef, userPlan);
   }
 
   // Closing slide
@@ -380,6 +492,8 @@ export async function buildPptxBuffer(plan: SlidePlan, themeKey?: string): Promi
     shadow: { type: 'outer', color: '000000', blur: 15, offset: 3 },
   });
   s.addShape('rect', { x: 4.5, y: 3.5, w: 1, h: 1, fill: { color: CURRENT_THEME.colors.accent }, rotate: 45 });
+  // Add watermark for Free users
+  addWatermark(s, userPlan);
 
   const buffer = (await pptx.write({ outputType: 'nodebuffer' })) as Buffer;
   return buffer;

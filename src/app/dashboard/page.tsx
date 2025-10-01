@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -193,21 +194,67 @@ export default function DashboardPage() {
   }
 
   const handleRegenerateProject = async (id: string) => {
+    // Check tokens before attempting regeneration
+    const tokenCheck = await checkTokensForAction('regenerate_slides', id)
+    if (!tokenCheck.hasEnoughTokens) {
+      alert(`❌ ${tokenCheck.message}\n\nPlease purchase more tokens or upgrade your plan to continue.`)
+      return
+    }
+
     if (confirm('Are you sure you want to regenerate this project? This will create new slides.')) {
       try {
         const { error } = await regenerateProject(id)
         if (error) {
           console.error('Error regenerating project:', error)
-          alert(`Error: ${error}`)
+          
+          // Handle specific error cases
+          if (error.includes('Insufficient tokens')) {
+            alert(`❌ ${error}\n\nPlease purchase more tokens or upgrade your plan to continue.`)
+          } else if (error.includes('Too many requests')) {
+            alert(`⏳ ${error}`)
+          } else if (error.includes('AI service')) {
+            alert(`🤖 ${error}`)
+          } else {
+            alert(`❌ Error: ${error}`)
+          }
+        } else {
+          // Success - refresh token data
+          refreshTokens()
         }
       } catch (err) {
         console.error('Error regenerating project:', err)
-        alert(`Error: ${err instanceof Error ? err.message : 'Unknown error'}`)
+        const errorMessage = err instanceof Error ? err.message : 'Unknown error'
+        alert(`❌ Error: ${errorMessage}`)
       }
     }
   }
 
   const handleExportProject = async (id: string) => {
+    // Find the project to check its status
+    const project = projects.find(p => p.id === id)
+    if (!project) {
+      alert('Project not found')
+      return
+    }
+
+    // Check if project is ready for export
+    if (project.status !== 'ready') {
+      if (project.status === 'generating') {
+        alert('Project is still being generated. Please wait for it to complete before exporting.')
+      } else if (project.status === 'error') {
+        alert('Project generation failed. Please regenerate the project before exporting.')
+      } else {
+        alert('Project is not ready for export. Please ensure slides have been generated.')
+      }
+      return
+    }
+
+    // Check if project has slide plan
+    if (!project.slide_plan) {
+      alert('Project has no slides generated. Please regenerate the project first.')
+      return
+    }
+
     // Check if user has enough tokens
     const tokenCheck = await checkTokensForAction('export_presentation', id)
     if (!tokenCheck.hasEnoughTokens) {
@@ -221,19 +268,29 @@ export default function DashboardPage() {
     }
 
     try {
+      console.log('Starting export for project:', id)
       const { data, error } = await exportProject(id)
+      
       if (error) {
-        console.error('Error exporting project:', error)
-        alert(`Error: ${error}`)
-      } else if (data?.url) {
+        console.error('Export API returned error:', error)
+        alert(`Export failed: ${error}`)
+        return
+      }
+      
+      if (data?.url) {
+        console.log('Export successful, opening URL:', data.url)
         // Open the download URL in a new tab
         window.open(data.url, '_blank')
         // Refresh token data after successful export
         refreshTokens()
+      } else {
+        console.error('Export succeeded but no URL returned:', data)
+        alert('Export completed but no download URL was provided')
       }
     } catch (err) {
-      console.error('Error exporting project:', err)
-      alert(`Error: ${err instanceof Error ? err.message : 'Unknown error'}`)
+      console.error('Export request failed:', err)
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error'
+      alert(`Export failed: ${errorMessage}`)
     }
   }
 
@@ -307,8 +364,8 @@ export default function DashboardPage() {
     initializing
   })
 
-  // Show loading only if we don't have a user yet
-  if (!user) {
+  // Show loading only if we don't have a user yet and auth is still loading
+  if (!user && (authLoading || initializing)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
@@ -323,8 +380,19 @@ export default function DashboardPage() {
     )
   }
 
+  // If auth is done loading but no user, redirect to auth
+  if (!user && !authLoading && !initializing) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <p className="text-muted-foreground">Redirecting to login...</p>
+        </div>
+      </div>
+    )
+  }
+
   // User exists, render dashboard
-  console.log('Rendering dashboard for user:', user.email)
+  console.log('Rendering dashboard for user:', user?.email)
   console.log('Projects state:', { 
     loading: projectsLoading, 
     error: projectsError, 
@@ -352,7 +420,7 @@ export default function DashboardPage() {
             <span className="text-sm text-muted-foreground">
               Welcome, {user?.name || user?.email}
             </span>
-            <Button variant="ghost" size="sm" onClick={handleSignOut}>
+            <Button variant="outline" size="sm" onClick={handleSignOut} className="border-2 text-red-600 hover:text-red-700 hover:bg-red-50">
               <LogOut className="h-4 w-4 mr-2" />
               Sign Out
             </Button>
@@ -393,15 +461,26 @@ export default function DashboardPage() {
 
         {/* Token Usage Section - Show first, even while loading */}
         <div className="mb-8">
-          <TokenUsage
-            tokenInfo={tokenInfo}
-            usageHistory={usageHistory}
-            usageStats={usageStats}
-            onUpgrade={handleUpgradePlan}
-            onPurchaseTokens={handlePurchaseTokens}
-            onViewHistory={handleViewTokenHistory}
-            isLoading={tokensLoading}
-          />
+          {tokensError && tokensError.includes('Authentication required') ? (
+            <Card className="mb-8 border-yellow-200 bg-yellow-50 dark:border-yellow-800 dark:bg-yellow-950">
+              <CardContent className="pt-6">
+                <div className="flex items-center gap-2 text-yellow-600">
+                  <AlertCircle className="h-5 w-5" />
+                  <p>Please wait while we verify your authentication...</p>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <TokenUsage
+              tokenInfo={tokenInfo}
+              usageHistory={usageHistory}
+              usageStats={usageStats}
+              onUpgrade={handleUpgradePlan}
+              onPurchaseTokens={handlePurchaseTokens}
+              onViewHistory={handleViewTokenHistory}
+              isLoading={tokensLoading}
+            />
+          )}
         </div>
 
         <div className="flex items-center justify-between mb-8">
@@ -477,6 +556,12 @@ export default function DashboardPage() {
                           {project.generate_error}
                         </div>
                       )}
+                      {project.status === 'ready' && !project.slide_plan && project.slide_count === 0 && (
+                        <div className="flex items-center gap-2 text-sm text-yellow-600">
+                          <AlertCircle className="h-4 w-4" />
+                          No slides generated - regenerate to create slides
+                        </div>
+                      )}
                     </div>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -489,18 +574,21 @@ export default function DashboardPage() {
                           <Eye className="h-4 w-4 mr-2" />
                           View
                         </DropdownMenuItem>
-                        {project.status === 'ready' && (
-                          <>
-                            <DropdownMenuItem onClick={() => handleRegenerateProject(project.id)}>
-                              <RefreshCw className="h-4 w-4 mr-2" />
-                              Regenerate
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleExportProject(project.id)}>
-                              <Download className="h-4 w-4 mr-2" />
-                              Export PPTX
-                            </DropdownMenuItem>
-                          </>
-                        )}
+                    {project.status === 'ready' && (
+                      <>
+                        <DropdownMenuItem onClick={() => handleRegenerateProject(project.id)}>
+                          <RefreshCw className="h-4 w-4 mr-2" />
+                          Regenerate
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          onClick={() => handleExportProject(project.id)}
+                          disabled={!project.slide_plan}
+                        >
+                          <Download className="h-4 w-4 mr-2" />
+                          Export PPTX
+                        </DropdownMenuItem>
+                      </>
+                    )}
                         {project.status === 'error' && (
                           <DropdownMenuItem onClick={() => handleRegenerateProject(project.id)}>
                             <RefreshCw className="h-4 w-4 mr-2" />
@@ -558,6 +646,8 @@ export default function DashboardPage() {
                         variant="outline" 
                         size="sm"
                         onClick={() => handleExportProject(project.id)}
+                        disabled={!project.slide_plan}
+                        title={!project.slide_plan ? "No slides generated yet" : "Export as PPTX"}
                       >
                         <Download className="h-4 w-4" />
                       </Button>
@@ -614,6 +704,34 @@ export default function DashboardPage() {
           onError={handleCreationError}
         />
       )}
+
+      {/* Footer */}
+      <footer className="border-t border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 mt-16">
+        <div className="mx-auto max-w-7xl px-4 py-8">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div className="flex items-center gap-2">
+              <Image 
+                src="/slivoralogonoback.png" 
+                alt="Slivora Logo" 
+                width={80} 
+                height={80}
+                className="h-6 w-auto"
+              />
+              <span className="text-sm text-muted-foreground">
+                © {new Date().getFullYear()} Slivora. All rights reserved.
+              </span>
+            </div>
+            <div className="flex gap-6 text-sm">
+              <Link href="/contact" className="text-muted-foreground hover:text-foreground transition-colors">
+                Contact
+              </Link>
+              <Link href="/refund-policy" className="text-muted-foreground hover:text-foreground transition-colors">
+                Refund Policy
+              </Link>
+            </div>
+          </div>
+        </div>
+      </footer>
     </div>
   )
 }

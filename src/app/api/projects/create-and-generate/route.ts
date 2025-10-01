@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { generateSlidePlan } from '@/lib/llm';
+import { generateSlidePlan, generateStudyNotes } from '@/lib/llm';
 import { hitRateLimit } from '@/lib/rateLimit';
 import { GenerateRequestSchema, formatValidationErrors, ErrorResponse } from '@/types/slide-plan';
 import { checkUserTokens, deductTokens } from '@/lib/token-system';
@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(errorResponse, { status: 422 });
     }
     
-    const { title, language, outline, theme } = validationResult.data;
+    const { title, language, outline, theme, includeStudyNotes } = validationResult.data;
     
     // Get authenticated user
     console.log('Creating Supabase client...');
@@ -168,33 +168,47 @@ export async function POST(request: NextRequest) {
       console.log('AI generation completed successfully');
       console.log('Generated slide plan:', slidePlan);
       
-      // Try to update project with slide plan (if column exists)
+      // Optionally generate study notes for Pro users
+      let studyNotesMarkdown: string | null = null;
+      if (includeStudyNotes && (user.user_metadata?.subscription_plan === 'pro' || user.user_metadata?.subscription_plan === 'business' || user.user_metadata?.subscription_plan === 'enterprise')) {
+        try {
+          const notes = await generateStudyNotes(slidePlan, language);
+          studyNotesMarkdown = notes.markdown;
+        } catch (e) {
+          console.warn('Study notes generation failed:', e);
+        }
+      }
+      
+      // Update project with slide plan
       let updatedProject = project;
       let updateError = null;
       
       try {
+        console.log('Updating project with slide plan...');
         const { data: updateData, error: updateErr } = await supabase
           .from('projects')
-          .update({
+          .update({ 
             slide_count: slidePlan.slides.length,
             slide_plan: slidePlan, // Store the complete slide plan
             status: 'ready',
             slides_count: slidePlan.slides.length,
             last_generated_at: new Date().toISOString(),
             generate_error: null,
+            study_notes_md: studyNotesMarkdown,
           })
           .eq('id', project.id)
           .select()
           .single();
         
         if (updateErr) {
-          console.log('Slide plan column might not exist, falling back to individual slides:', updateErr.message);
+          console.error('Failed to update project with slide plan:', updateErr);
           updateError = updateErr;
         } else {
+          console.log('Successfully updated project with slide plan');
           updatedProject = updateData;
         }
       } catch (err) {
-        console.log('Error updating with slide plan, falling back to individual slides:', err);
+        console.error('Error updating with slide plan:', err);
         updateError = err;
       }
       
@@ -225,18 +239,26 @@ export async function POST(request: NextRequest) {
           return NextResponse.json(errorResponse, { status: 500 });
         }
         
-        // Update just the slide count and status
-        const { data: fallbackUpdate } = await supabase
+        // Update project with slide count, status, and try to save slide_plan again
+        const { data: fallbackUpdate, error: fallbackError } = await supabase
           .from('projects')
           .update({ 
             slide_count: slidePlan.slides.length,
-            status: 'ready'
+            slides_count: slidePlan.slides.length,
+            status: 'ready',
+            last_generated_at: new Date().toISOString(),
+            generate_error: null,
+            // Try to save slide_plan again in case the column was just missing
+            slide_plan: slidePlan,
           })
           .eq('id', project.id)
           .select()
           .single();
         
-        if (fallbackUpdate) {
+        if (fallbackError) {
+          console.error('Failed to update project status:', fallbackError);
+        } else {
+          console.log('Successfully updated project with fallback method');
           updatedProject = fallbackUpdate;
         }
       }
@@ -272,6 +294,14 @@ export async function POST(request: NextRequest) {
         language,
         slideCount: slidePlan.slides.length
       });
+      // If study notes were generated, deduct tokens for that too
+      if (studyNotesMarkdown) {
+        await deductTokens(user.id, 'generate_study_notes', project.id, {
+          title,
+          language,
+          slideCount: slidePlan.slides.length
+        });
+      }
       
       if (!tokenDeduction.success) {
         console.error('Failed to deduct tokens:', tokenDeduction.error);
@@ -282,6 +312,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         project: updatedProject,
         plan: slidePlan,
+        studyNotes: studyNotesMarkdown,
         remaining: rateLimitResult.remaining,
         tokensDeducted: tokenDeduction.tokensDeducted,
         remainingTokens: tokenDeduction.remainingTokens,

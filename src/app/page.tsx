@@ -4,13 +4,11 @@ import * as React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { Sparkles, Wand2, FileText, Rocket, Zap, Star, CheckCircle, Users, Clock, Download, ArrowRight, Play } from "lucide-react";
+import { Sparkles, Wand2, FileText, Rocket, Zap, Star, CheckCircle, Users, Clock, Download, ArrowRight, Play, Type, Layers, Presentation } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/lib/hooks/useAuth";
+import { SUBSCRIPTION_PLANS, TOKEN_COSTS } from "@/lib/config/pricing";
 
 export default function Home() {
   const { user, loading } = useAuth();
@@ -36,10 +34,10 @@ export default function Home() {
   }
 
   return (
-    <div className="font-sans min-h-screen bg-background text-foreground">
+    <div className="font-sans min-h-screen bg-[var(--background)] text-[var(--foreground)]">
       {/* Header */}
-      <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="mx-auto max-w-6xl px-4 h-16 flex items-center justify-between">
+      <header className="sticky top-0 z-50 w-full border-b border-[var(--border)] bg-[var(--background)]/80 backdrop-blur supports-[backdrop-filter]:bg-[var(--background)]/60">
+        <div className="mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Link href="/">
               <Image 
@@ -47,308 +45,351 @@ export default function Home() {
                 alt="Slivora Logo" 
                 width={120} 
                 height={120}
-                className="h-23 w-23 cursor-pointer hover:opacity-80 transition-opacity"
+                className="h-25 w-25 cursor-pointer hover:opacity-80 transition-opacity"
               />
             </Link>
           </div>
-          <nav className="hidden md:flex items-center gap-6 text-sm text-muted-foreground">
-            <a className="hover:text-foreground" href="#features">Features</a>
-            <a className="hover:text-foreground" href="#how">How it works</a>
-            <a className="hover:text-foreground" href="#testimonials">Testimonials</a>
-            <a className="hover:text-foreground" href="#pricing">Pricing</a>
+          <nav className="hidden md:flex items-center gap-6 text-sm text-[var(--muted-foreground)]">
+            <a className="hover:text-[var(--foreground)] transition-colors" href="#features">Features</a>
+            <a className="hover:text-[var(--foreground)] transition-colors" href="#pricing">Pricing</a>
+            <a className="hover:text-[var(--foreground)] transition-colors" href="#faq">FAQ</a>
           </nav>
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="icon" aria-label="Toggle theme" onClick={toggleTheme}>
               {isDark ? <SunIcon /> : <MoonIcon />}
             </Button>
-            <Link href="/auth">
-              <Button className="hidden sm:inline-flex">Get started</Button>
+            <Link href="/auth/signin">
+              <Button variant="outline" size="sm" className="w-20 sm:w-24 text-xs sm:text-sm">Sign in</Button>
+            </Link>
+            <Link href="/auth/signup">
+              <Button size="sm" className="w-20 sm:w-24 text-xs sm:text-sm">Get started</Button>
             </Link>
           </div>
         </div>
       </header>
 
-      {/* Hero */}
-      <section className="relative">
-        <div className="mx-auto max-w-6xl px-4 py-14 sm:py-20">
-          <div className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs text-muted-foreground">
-            <Sparkles className="h-3.5 w-3.5 text-primary" />
-            AI Presentation Generator
-          </div>
-          <h1 className="mt-6 text-3xl sm:text-5xl font-semibold tracking-tight">
-            Create stunning presentations in minutes, not hours
-          </h1>
-          <p className="mt-4 max-w-2xl text-muted-foreground text-lg">
-            Stop spending hours on slide design. Our AI creates professional presentations from your ideas in seconds. Perfect for business, education, and creative projects.
-          </p>
+      {/* Hero Section */}
+      <section className="bg-[var(--background)] py-12 sm:py-16 lg:py-20">
+        <div className="mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-8">
+          <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-center">
+            {/* Left - Copy */}
+            <div className="space-y-6 lg:space-y-8">
+              <div>
+                <h1 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold tracking-tight text-[var(--foreground)] leading-tight">
+                  Turn your outline into slides in 1 minute.
+                </h1>
+                <p className="mt-4 sm:mt-6 text-base sm:text-lg text-[var(--muted-foreground)] max-w-2xl leading-relaxed">
+                  Paste a topic or bullets—get a clean, ready-to-present deck. Skip the formatting grind.
+                </p>
+              </div>
 
-          <div className="mt-8 flex flex-col sm:flex-row gap-4">
-            <Link href="/auth">
-              <Button size="lg" className="gap-2">
-                <Wand2 className="h-4 w-4" />
-                Start creating for free
-              </Button>
-            </Link>
-            <Button size="lg" variant="outline" className="gap-2">
-              <Play className="h-4 w-4" />
-              Watch demo
-            </Button>
-          </div>
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+                <Link href="/auth/signup">
+                  <Button 
+                    size="lg" 
+                    className="w-full sm:w-auto bg-[var(--primary)] text-[var(--primary-foreground)] hover:bg-[var(--primary)]/90 focus:ring-2 focus:ring-[var(--ring)] focus:ring-offset-2 button-press"
+                  >
+                    Create your presentation
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </Link>
+                <Link href="/auth/signup">
+                  <Button 
+                    size="lg" 
+                    variant="outline" 
+                    className="w-full sm:w-auto border border-[var(--border)] text-[var(--foreground)] bg-[var(--card)] hover:bg-[var(--accent)] focus:ring-2 focus:ring-[var(--ring)] focus:ring-offset-2 button-press"
+                  >
+                    Try free
+                  </Button>
+                </Link>
+              </div>
 
-          <div className="mt-12 grid grid-cols-1 sm:grid-cols-3 gap-6">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-primary">10x</div>
-              <div className="text-sm text-muted-foreground">Faster than manual design</div>
+              <div className="flex flex-wrap items-center gap-4 sm:gap-6 text-sm text-[var(--muted-foreground)]">
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="h-4 w-4 text-[var(--primary)] flex-shrink-0" />
+                  <span>.pptx export</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="h-4 w-4 text-[var(--primary)] flex-shrink-0" />
+                  <span className="hidden sm:inline">{SUBSCRIPTION_PLANS.free.monthlyTokens} tokens/month free</span>
+                  <span className="sm:hidden">Free tokens</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="h-4 w-4 text-[var(--primary)] flex-shrink-0" />
+                  <span className="hidden sm:inline">Study Notes (Pro+)</span>
+                  <span className="sm:hidden">Study Notes</span>
+                </div>
+              </div>
             </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-primary">50K+</div>
-              <div className="text-sm text-muted-foreground">Presentations created</div>
+
+            {/* Right - Interactive Slide Preview */}
+            <div className="relative parallax-container">
+              <div className="space-y-3 sm:space-y-4">
+                {/* Slide 1 */}
+                <div className="slide-1 w-full max-w-sm sm:max-w-md aspect-[16/9] bg-[var(--card)] border border-[var(--border)] rounded-lg shadow-[var(--shadow-sm)] transform rotate-[-2deg] slide-preview cursor-pointer focus:outline-none focus:ring-2 focus:ring-[var(--ring)] focus:ring-offset-2" 
+                     role="img" 
+                     aria-label="Preview of AI-generated slides with title and bullet layout">
+                  <div className="p-3 sm:p-6 h-full flex flex-col">
+                    <div className="h-2 bg-[var(--primary)] rounded mb-3 sm:mb-4"></div>
+                    <h3 className="text-base sm:text-lg font-semibold text-[var(--foreground)] mb-2 sm:mb-3">Create in Seconds</h3>
+                    <div className="flex-1 flex items-center justify-center mb-2 sm:mb-3">
+                      <Image 
+                        src="/header1.png" 
+                        alt="Slide visual 1" 
+                        width={120} 
+                        height={120}
+                        className="rounded-lg object-cover w-32 h-32 sm:w-32 sm:h-32 lg:w-40 lg:h-40"
+                      />
+                    </div>
+                    <div className="space-y-1 sm:space-y-2 text-[var(--muted-foreground)] text-xs sm:text-sm">
+                      <div className="h-1 bg-[var(--muted)] rounded w-3/4"></div>
+                      <div className="h-1 bg-[var(--muted)] rounded w-1/2"></div>
+                      <div className="h-1 bg-[var(--muted)] rounded w-2/3"></div>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Slide 2 */}
+                <div className="slide-2 w-full max-w-sm sm:max-w-md aspect-[16/9] bg-[var(--card)] border border-[var(--border)] rounded-lg shadow-[var(--shadow-sm)] transform rotate-[1deg] translate-y-[-10px] sm:translate-y-[-20px] slide-preview cursor-pointer focus:outline-none focus:ring-2 focus:ring-[var(--ring)] focus:ring-offset-2" 
+                     role="img" 
+                     aria-label="Preview of AI-generated slides with title and bullet layout">
+                  <div className="p-3 sm:p-6 h-full flex flex-col">
+                    <div className="h-2 bg-[var(--primary)] rounded mb-3 sm:mb-4"></div>
+                    <h3 className="text-base sm:text-lg font-semibold text-[var(--foreground)] mb-2 sm:mb-3">Smarter Slides, Less Effort</h3>
+                    <div className="flex-1 flex items-center justify-center mb-2 sm:mb-3">
+                      <Image 
+                        src="/header2.png" 
+                        alt="Slide visual 2" 
+                        width={120} 
+                        height={120}
+                        className="rounded-lg object-cover w-32 h-32 sm:w-32 sm:h-32 lg:w-40 lg:h-40"
+                      />
+                    </div>
+                    <div className="space-y-1 sm:space-y-2 text-[var(--muted-foreground)] text-xs sm:text-sm">
+                      <div className="h-1 bg-[var(--muted)] rounded w-4/5"></div>
+                      <div className="h-1 bg-[var(--muted)] rounded w-3/5"></div>
+                      <div className="h-1 bg-[var(--muted)] rounded w-2/3"></div>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Slide 3 */}
+                <div className="slide-3 w-full max-w-sm sm:max-w-md aspect-[16/9] bg-[var(--card)] border border-[var(--border)] rounded-lg shadow-[var(--shadow-sm)] transform rotate-[-1deg] translate-y-[-20px] sm:translate-y-[-40px] slide-preview cursor-pointer focus:outline-none focus:ring-2 focus:ring-[var(--ring)] focus:ring-offset-2" 
+                     role="img" 
+                     aria-label="Preview of AI-generated slides with title and bullet layout">
+                  <div className="p-3 sm:p-6 h-full flex flex-col">
+                    <div className="h-2 bg-[var(--primary)] rounded mb-3 sm:mb-4"></div>
+                    <h3 className="text-base sm:text-lg font-semibold text-[var(--foreground)] mb-2 sm:mb-3">Ready to Present</h3>
+                    <div className="flex-1 flex items-center justify-center mb-2 sm:mb-3">
+                      <Image 
+                        src="/header3.png" 
+                        alt="Slide visual 3" 
+                        width={120} 
+                        height={120}
+                        className="rounded-lg object-cover w-32 h-32 sm:w-32 sm:h-32 lg:w-40 lg:h-40"
+                      />
+                    </div>
+                    <div className="space-y-1 sm:space-y-2 text-[var(--muted-foreground)] text-xs sm:text-sm">
+                      <div className="h-1 bg-[var(--muted)] rounded w-3/4"></div>
+                      <div className="h-1 bg-[var(--muted)] rounded w-1/2"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-primary">4.9★</div>
-              <div className="text-sm text-muted-foreground">User satisfaction</div>
-            </div>
           </div>
         </div>
       </section>
 
-      {/* Features */}
-      <section id="features" className="border-t">
-        <div className="mx-auto max-w-6xl px-4 py-14 sm:py-20">
-          <div className="text-center mb-12">
-            <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight">Why choose Slivora?</h2>
-            <p className="mt-4 text-muted-foreground max-w-2xl mx-auto">
-              Powerful AI technology meets intuitive design to create presentations that actually engage your audience.
+      {/* How it Works Section */}
+      <section className="py-12 sm:py-16 lg:py-20 border-t border-[var(--border)]">
+        <div className="mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12 sm:mb-16">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-[var(--foreground)] mb-4">
+              How it works
+            </h2>
+            <p className="text-base sm:text-lg text-[var(--muted-foreground)] max-w-2xl mx-auto">
+              No templates. No messing with fonts. Just type and go.
             </p>
           </div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            <Feature 
-              icon={<Zap className="h-6 w-6 text-primary" />} 
-              title="Lightning Fast" 
-              desc="Generate complete presentations in under 30 seconds. No more spending hours on slide design." 
+          
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
+            <StepCard 
+              step="1"
+              icon={<Type className="h-6 w-6" />}
+              title="Add your idea"
+              description="Type a topic or paste your outline."
             />
-            <Feature 
-              icon={<FileText className="h-6 w-6 text-primary" />} 
-              title="Smart Content" 
-              desc="AI analyzes your topic and creates structured, logical flow with compelling bullet points and insights." 
+            <StepCard 
+              step="2"
+              icon={<Wand2 className="h-6 w-6" />}
+              title="Generate your deck"
+              description="Get structured slides with clean bullets and layouts."
             />
-            <Feature 
-              icon={<Star className="h-6 w-6 text-primary" />} 
-              title="Professional Design" 
-              desc="Beautiful, modern templates that work for any industry. No design skills required." 
-            />
-            <Feature 
-              icon={<Users className="h-6 w-6 text-primary" />} 
-              title="Audience-Focused" 
-              desc="Tailored content based on your audience type - executives, students, clients, or team members." 
-            />
-            <Feature 
-              icon={<Clock className="h-6 w-6 text-primary" />} 
-              title="Time-Saving" 
-              desc="Save 5-10 hours per presentation. Focus on your message, not formatting and design." 
-            />
-            <Feature 
-              icon={<Download className="h-6 w-6 text-primary" />} 
-              title="Export Anywhere" 
-              desc="Download as PowerPoint, PDF, or Google Slides. Works with your existing workflow." 
+            <StepCard 
+              step="3"
+              icon={<Download className="h-6 w-6" />}
+              title="Export & present"
+              description=".pptx download for PowerPoint."
             />
           </div>
         </div>
       </section>
 
-      {/* How it works */}
-      <section id="how" className="border-t">
-        <div className="mx-auto max-w-6xl px-4 py-14 sm:py-20">
-          <div className="text-center mb-12">
-            <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight">How it works</h2>
-            <p className="mt-4 text-muted-foreground max-w-2xl mx-auto">
-              Creating professional presentations has never been this simple. Just three steps to get started.
+      {/* Features Section */}
+      <section id="features" className="py-12 sm:py-16 lg:py-20 border-t border-[var(--border)]">
+        <div className="mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12 sm:mb-16">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-[var(--foreground)] mb-4">
+              Why students love it
+            </h2>
+            <p className="text-base sm:text-lg text-[var(--muted-foreground)] max-w-2xl mx-auto">
+              Focus on the ideas—leave the formatting to us.
             </p>
           </div>
-          <div className="grid gap-8 sm:grid-cols-3">
-            <Step 
-              index={1} 
-              title="Describe your idea" 
-              desc="Tell us your topic, target audience, and presentation goals. The more details you provide, the better the results." 
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            <FeatureCard 
+              icon={<Wand2 className="h-6 w-6" />}
+              title="AI-Generated Slides"
+              description="Clear structure, solid bullets, tidy layouts—instantly."
             />
-            <Step 
-              index={2} 
-              title="AI generates content" 
-              desc="Our AI analyzes your input and creates structured slides with compelling content, proper flow, and professional design." 
+            <FeatureCard 
+              icon={<Download className="h-6 w-6" />}
+              title=".pptx Export"
+              description="Open in PowerPoint without messy fixes."
             />
-            <Step 
-              index={3} 
-              title="Customize & export" 
-              desc="Review, edit, and customize your presentation. Export to PowerPoint, PDF, or Google Slides when you're ready." 
+            <FeatureCard 
+              icon={<FileText className="h-6 w-6" />}
+              title="Study Notes (Pro)"
+              description="Concise summaries and key concepts derived from your deck."
+            />
+            <FeatureCard 
+              icon={<Star className="h-6 w-6" />}
+              title="Watermark on Free"
+              description="Try it free. Upgrade anytime to remove the watermark."
             />
           </div>
         </div>
       </section>
 
-      {/* Testimonials */}
-      <section id="testimonials" className="border-t bg-muted/30">
-        <div className="mx-auto max-w-6xl px-4 py-14 sm:py-20">
-          <div className="text-center mb-12">
-            <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight">What our users say</h2>
-            <p className="mt-4 text-muted-foreground max-w-2xl mx-auto">
-              Join thousands of professionals who've transformed their presentation workflow.
+      {/* Pricing Section */}
+      <section id="pricing" className="py-12 sm:py-16 lg:py-20 border-t border-[var(--border)]">
+        <div className="mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12 sm:mb-16">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-[var(--foreground)] mb-4">
+              Simple pricing
+            </h2>
+            <p className="text-base sm:text-lg text-[var(--muted-foreground)]">
+              Start free. Upgrade when you need more.
             </p>
           </div>
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            <Testimonial 
-              name="Sarah Chen"
-              role="Marketing Director"
-              company="TechCorp"
-              content="Presently saved me 8 hours on my quarterly presentation. The AI understood my audience perfectly and created slides that actually engaged our stakeholders."
-              rating={5}
-            />
-            <Testimonial 
-              name="Marcus Johnson"
-              role="Sales Manager"
-              company="Growth Inc"
-              content="I used to dread creating sales decks. Now I can focus on the strategy while Presently handles the design. My close rate improved by 23%."
-              rating={5}
-            />
-            <Testimonial 
-              name="Dr. Emily Rodriguez"
-              role="Professor"
-              company="University of California"
-              content="Perfect for academic presentations. The AI creates logical flow and includes proper citations. My students are more engaged than ever."
-              rating={5}
-            />
+          
+          <div className="grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-4 max-w-7xl mx-auto">
+            {Object.values(SUBSCRIPTION_PLANS).map((plan) => {
+              const isContact = (plan as any).contactUs === true;
+              const displayPrice = isContact
+                ? 'Contact us'
+                : plan.price === 0
+                  ? 'Free'
+                  : `$${plan.price}`;
+              const period = isContact || plan.price === 0 ? '' : '/ month';
+              const buttonText = isContact
+                ? 'Contact us'
+                : plan.price === 0
+                  ? 'Start free'
+                  : `Go ${plan.name}`;
+              const href = isContact ? '/contact' : plan.price === 0 ? '/auth' : '/checkout';
+
+              return (
+                <PricingCard 
+                  key={plan.id}
+                  name={plan.name}
+                  price={displayPrice}
+                  period={period}
+                  description={plan.features[0]}
+                  features={plan.features}
+                  buttonText={buttonText}
+                  href={href}
+                  popular={plan.popular || false}
+                />
+              );
+            })}
+          </div>
+          
+          <div className="mt-8 text-center text-sm text-[var(--muted-foreground)]">
+            Secure payments via LemonSqueezy.
           </div>
         </div>
       </section>
 
-      {/* Pricing */}
-      <section id="pricing" className="border-t">
-        <div className="mx-auto max-w-6xl px-4 py-14 sm:py-20">
-          <div className="text-center mb-12">
-            <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight">Simple, transparent pricing</h2>
-            <p className="mt-4 text-muted-foreground max-w-2xl mx-auto">
-              Start free, upgrade when you need more. No hidden fees, no surprises.
-            </p>
-          </div>
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 max-w-4xl mx-auto">
-            <PricingCard 
-              name="Free"
-              price="$0"
-              period="forever"
-              description="Perfect for trying out SLIVORA"
-              features={[
-                "50 tokens per month",
-                "Create presentations",
-                "Export to PDF",
-                "Basic templates",
-                "Community support"
-              ]}
-              buttonText="Get started"
-              popular={false}
-            />
-            <PricingCard 
-              name="Pro"
-              price="$19"
-              period="per month"
-              description="For professionals and small teams"
-              features={[
-                "500 tokens per month",
-                "10% token rollover",
-                "All export formats",
-                "Premium templates",
-                "Priority support",
-                "Custom branding"
-              ]}
-              buttonText="Start free trial"
-              href="/auth"
-              popular={true}
-            />
-            <PricingCard 
-              name="Business"
-              price="$49"
-              period="per month"
-              description="For growing organizations"
-              features={[
-                "2,500 tokens per month",
-                "15% token rollover",
-                "Everything in Pro",
-                "Team collaboration",
-                "Advanced analytics",
-                "API access",
-                "Dedicated support"
-              ]}
-              buttonText="Contact sales"
-              popular={false}
-            />
-          </div>
-        </div>
-      </section>
-
-      {/* FAQ */}
-      <section id="faq" className="border-t bg-muted/30">
-        <div className="mx-auto max-w-6xl px-4 py-14 sm:py-20">
-          <div className="text-center mb-12">
-            <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight">Frequently asked questions</h2>
-            <p className="mt-4 text-muted-foreground max-w-2xl mx-auto">
-              Everything you need to know about Slivora.
-            </p>
-          </div>
-          <div className="grid gap-4 max-w-3xl mx-auto">
-            <details className="rounded-md border p-6">
-              <summary className="cursor-pointer font-medium text-lg">How does the token system work?</summary>
-              <p className="mt-3 text-muted-foreground">SLIVORA uses a token-based pricing system. Each action (creating presentations, exporting, etc.) consumes a specific number of tokens. Free users get 50 tokens monthly, while paid plans offer more tokens and rollover benefits.</p>
-            </details>
-            <details className="rounded-md border p-6">
-              <summary className="cursor-pointer font-medium text-lg">How does the AI create presentations?</summary>
-              <p className="mt-3 text-muted-foreground">Our AI analyzes your topic, audience, and goals to create structured content with logical flow. It uses advanced language models to generate compelling bullet points, proper transitions, and professional formatting.</p>
-            </details>
-            <details className="rounded-md border p-6">
-              <summary className="cursor-pointer font-medium text-lg">Can I customize the generated presentations?</summary>
-              <p className="mt-3 text-muted-foreground">Absolutely! You can edit any text, reorder slides, change templates, add your own content, and customize colors and fonts. The AI gives you a great starting point that you can make your own.</p>
-            </details>
-            <details className="rounded-md border p-6">
-              <summary className="cursor-pointer font-medium text-lg">What file formats can I export to?</summary>
-              <p className="mt-3 text-muted-foreground">You can export to PowerPoint (.pptx), PDF, and Google Slides. All formats maintain your design and formatting perfectly. Each export costs 3 tokens.</p>
-            </details>
-            <details className="rounded-md border p-6">
-              <summary className="cursor-pointer font-medium text-lg">Is my data secure?</summary>
-              <p className="mt-3 text-muted-foreground">Yes, we take security seriously. All data is encrypted in transit and at rest. We never share your content with third parties, and you can delete your data at any time.</p>
-            </details>
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="border-t">
-        <div className="mx-auto max-w-6xl px-4 py-14 sm:py-20">
+      {/* Social Proof Section */}
+      <section className="py-12 sm:py-16 lg:py-20 border-t border-[var(--border)] bg-[var(--muted)]/20">
+        <div className="mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight">Ready to transform your presentations?</h2>
-            <p className="mt-4 text-muted-foreground max-w-2xl mx-auto text-lg">
-              Join thousands of professionals who've already made the switch to AI-powered presentations.
-            </p>
-            <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href="/auth">
-                <Button size="lg" className="gap-2">
-                  <Wand2 className="h-4 w-4" />
-                  Start creating for free
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              </Link>
-              <Button size="lg" variant="outline" className="gap-2">
-                <Play className="h-4 w-4" />
-                Watch demo
-              </Button>
+            <div className="flex flex-col sm:flex-row justify-center items-center gap-6 sm:gap-8 mb-6 sm:mb-8">
+              <div className="text-center">
+                <div className="text-2xl sm:text-3xl font-bold text-[var(--primary)]">100+</div> {/* TODO: replace with live metric */}
+                <div className="text-sm text-[var(--muted-foreground)]">decks generated</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl sm:text-3xl font-bold text-[var(--primary)]">Used by students</div>
+                <div className="text-sm text-[var(--muted-foreground)]">across Europe and the US</div>
+              </div>
             </div>
-            <p className="mt-6 text-sm text-muted-foreground">
-              No credit card required • 3 free presentations • Cancel anytime
-            </p>
+            <div className="text-sm text-[var(--muted-foreground)]">
+              Your content is private. We only generate what you ask for.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ Section */}
+      <section id="faq" className="py-12 sm:py-16 lg:py-20 border-t border-[var(--border)] bg-[var(--muted)]/30">
+        <div className="mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12 sm:mb-16">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-[var(--foreground)]">
+              FAQ
+            </h2>
+          </div>
+          
+          <div className="max-w-3xl mx-auto space-y-3 sm:space-y-4">
+            <FAQItem 
+              question="What do I get on the Free plan?"
+              answer={`You get ${SUBSCRIPTION_PLANS.free.monthlyTokens} tokens per month (about ${Math.floor(SUBSCRIPTION_PLANS.free.monthlyTokens / TOKEN_COSTS.create_presentation.tokens)} presentations), export to .pptx, and access to 2 presentation themes. Free exports include a small watermark.`}
+            />
+            <FAQItem 
+              question="What's included in Pro?"
+              answer={`Pro gives you ${SUBSCRIPTION_PLANS.pro.monthlyTokens} tokens per month (about ${Math.floor(SUBSCRIPTION_PLANS.pro.monthlyTokens / TOKEN_COSTS.create_presentation.tokens)} presentations), ${SUBSCRIPTION_PLANS.pro.rolloverPercentage}% token rollover, all presentation themes, watermark-free exports, and Study Notes.`}
+            />
+            <FAQItem 
+              question="How much do different actions cost?"
+              answer={`Creating a presentation costs ${TOKEN_COSTS.create_presentation.tokens} tokens, adding/editing slides costs ${TOKEN_COSTS.add_edit_slide.tokens} token each, exporting costs ${TOKEN_COSTS.export_presentation.tokens} tokens, and generating study notes costs ${TOKEN_COSTS.generate_study_notes.tokens} tokens.`}
+            />
+            <FAQItem 
+              question="Can I use the decks for class presentations?"
+              answer="Yes. Export to .pptx and present in PowerPoint or any presentation software that supports .pptx files."
+            />
+            <FAQItem 
+              question="How do Study Notes work?"
+              answer="After your deck is generated, Pro+ users can export structured notes with key concepts and short summaries for quick revision."
+            />
+            <FAQItem 
+              question="Do you support multiple languages?"
+              answer="Yes. You can generate decks in multiple languages. Try Turkish or English."
+            />
+            <FAQItem 
+              question="Can I cancel anytime?"
+              answer="Absolutely. Manage your subscription in one click—your plan remains active until the end of the period."
+            />
           </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="border-t bg-muted/30">
-        <div className="mx-auto max-w-6xl px-4 py-12">
-          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+      <footer className="border-t border-[var(--border)] bg-[var(--muted)]/30">
+        <div className="mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+          <div className="grid gap-6 sm:gap-8 sm:grid-cols-2">
             <div>
               <div className="flex items-center gap-2 mb-4">
                 <Link href="/">
@@ -357,49 +398,53 @@ export default function Home() {
                     alt="Slivora Logo" 
                     width={120} 
                     height={120}
-                    className="h-14 w-14 cursor-pointer hover:opacity-80 transition-opacity"
+                    className="h-25 w-25 cursor-pointer hover:opacity-80 transition-opacity"
                   />
                 </Link>
               </div>
-              <p className="text-sm text-muted-foreground">
-                AI-powered presentation generator that creates stunning slides in seconds.
+              <p className="text-sm text-[var(--muted-foreground)]">
+                Slivora helps students turn rough ideas into clean presentations—fast.
               </p>
             </div>
-            <div>
-              <h3 className="font-semibold mb-4">Product</h3>
-              <div className="space-y-2 text-sm">
-                <a className="block text-muted-foreground hover:text-foreground" href="#features">Features</a>
-                <a className="block text-muted-foreground hover:text-foreground" href="#pricing">Pricing</a>
-                <a className="block text-muted-foreground hover:text-foreground" href="#how">How it works</a>
-                <a className="block text-muted-foreground hover:text-foreground" href="#faq">FAQ</a>
+            <div className="flex flex-col sm:flex-row gap-8">
+              <div>
+                <h3 className="font-semibold mb-4 text-[var(--foreground)]">Contact</h3>
+                <div className="space-y-2 text-sm">
+                  <a 
+                    className="block text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors" 
+                    href="/contact"
+                  >
+                    Contact
+                  </a>
+                </div>
               </div>
-            </div>
-            <div>
-              <h3 className="font-semibold mb-4">Company</h3>
-              <div className="space-y-2 text-sm">
-                <a className="block text-muted-foreground hover:text-foreground" href="#">About</a>
-                <a className="block text-muted-foreground hover:text-foreground" href="#">Blog</a>
-                <a className="block text-muted-foreground hover:text-foreground" href="#">Careers</a>
-                <a className="block text-muted-foreground hover:text-foreground" href="#">Contact</a>
-              </div>
-            </div>
-            <div>
-              <h3 className="font-semibold mb-4">Support</h3>
-              <div className="space-y-2 text-sm">
-                <a className="block text-muted-foreground hover:text-foreground" href="#">Help Center</a>
-                <a className="block text-muted-foreground hover:text-foreground" href="#">Documentation</a>
-                <a className="block text-muted-foreground hover:text-foreground" href="#">Status</a>
-                <a className="block text-muted-foreground hover:text-foreground" href="#">Privacy</a>
+              <div>
+                <h3 className="font-semibold mb-4 text-[var(--foreground)]">Legal</h3>
+                <div className="space-y-2 text-sm">
+                  <a 
+                    className="block text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors" 
+                    href="/legal/terms"
+                  >
+                    Terms
+                  </a>
+                  <a 
+                    className="block text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors" 
+                    href="/legal/privacy"
+                  >
+                    Privacy
+                  </a>
+                  <a 
+                    className="block text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors" 
+                    href="/refund-policy"
+                  >
+                    Refund Policy
+                  </a>
+                </div>
               </div>
             </div>
           </div>
-          <div className="mt-8 pt-8 border-t flex flex-col sm:flex-row justify-between items-center text-sm text-muted-foreground">
+          <div className="mt-8 pt-8 border-t border-[var(--border)] text-center text-sm text-[var(--muted-foreground)]">
             <span>© {new Date().getFullYear()} Slivora. All rights reserved.</span>
-            <div className="flex items-center gap-4 mt-4 sm:mt-0">
-              <a className="hover:text-foreground" href="#">Terms</a>
-              <a className="hover:text-foreground" href="#">Privacy</a>
-              <a className="hover:text-foreground" href="#">Cookies</a>
-            </div>
           </div>
         </div>
       </footer>
@@ -407,17 +452,81 @@ export default function Home() {
   );
 }
 
-function Feature({ icon, title, desc }: { icon: React.ReactNode; title: string; desc: string }) {
+// Step Card Component for How it Works section
+function StepCard({ step, icon, title, description }: { 
+  step: string; 
+  icon: React.ReactNode; 
+  title: string; 
+  description: string; 
+}) {
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-start gap-3">
-        <div className="h-9 w-9 rounded-md bg-primary/10 grid place-items-center">{icon}</div>
-        <div>
-          <CardTitle className="text-base">{title}</CardTitle>
-          <CardDescription>{desc}</CardDescription>
+    <Card className="bg-[var(--card)] border border-[var(--border)] rounded-lg shadow-[var(--shadow-sm)] card-hover">
+      <CardContent className="p-6 sm:p-8 text-center">
+        <div className="w-12 h-12 bg-[var(--primary)]/10 rounded-full flex items-center justify-center mx-auto mb-4">
+          {icon}
         </div>
-      </CardHeader>
+        <h3 className="text-lg font-semibold text-[var(--foreground)] mb-2">{title}</h3>
+        <p className="text-[var(--muted-foreground)]">{description}</p>
+      </CardContent>
     </Card>
+  );
+}
+
+// Feature Card Component
+function FeatureCard({ icon, title, description }: { 
+  icon: React.ReactNode; 
+  title: string; 
+  description: string; 
+}) {
+  return (
+    <Card className="bg-[var(--card)] border border-[var(--border)] rounded-lg shadow-[var(--shadow-sm)] card-hover">
+      <CardContent className="p-6 sm:p-8">
+        <div className="w-10 h-10 bg-[var(--primary)]/10 rounded-lg flex items-center justify-center mb-4">
+          {icon}
+        </div>
+        <h3 className="text-lg font-semibold text-[var(--foreground)] mb-2">{title}</h3>
+        <p className="text-[var(--muted-foreground)]">{description}</p>
+      </CardContent>
+    </Card>
+  );
+}
+
+// FAQ Item Component with proper accessibility
+function FAQItem({ question, answer }: { question: string; answer: string }) {
+  const [isOpen, setIsOpen] = React.useState(false);
+  
+  return (
+    <details 
+      className="group rounded-lg border border-[var(--border)] bg-[var(--card)]"
+      open={isOpen}
+    >
+      <summary 
+        className="flex cursor-pointer items-center justify-between p-6 font-medium text-[var(--foreground)] hover:bg-[var(--accent)] transition-colors"
+        onClick={(e) => {
+          e.preventDefault();
+          setIsOpen(!isOpen);
+        }}
+        aria-expanded={isOpen}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            setIsOpen(!isOpen);
+          }
+        }}
+      >
+        <span>{question}</span>
+        <span className={`transform transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}>
+          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </span>
+      </summary>
+      <div className="px-6 pb-6 text-[var(--muted-foreground)]">
+        {answer}
+      </div>
+    </details>
   );
 }
 
@@ -457,37 +566,53 @@ function PricingCard({ name, price, period, description, features, buttonText, p
   href?: string;
 }) {
   return (
-    <Card className={popular ? "border-primary shadow-lg" : ""}>
+    <Card className={`relative bg-[var(--card)] border rounded-lg shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-md)] transition-all duration-200 ${
+      popular ? "border-[var(--primary)] ring-2 ring-[var(--primary)]/20" : "border-[var(--border)]"
+    }`}>
       {popular && (
-        <div className="bg-primary text-primary-foreground text-center py-2 text-sm font-medium">
-          Most Popular
+        <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+          <div className="bg-[var(--primary)] text-[var(--primary-foreground)] px-4 py-1 rounded-full text-sm font-medium">
+            Most Popular
+          </div>
         </div>
       )}
-      <CardHeader className="text-center">
-        <CardTitle className="text-xl">{name}</CardTitle>
+      <CardHeader className="text-center pt-8">
+        <CardTitle className="text-2xl font-bold text-[var(--foreground)]">{name}</CardTitle>
         <div className="mt-4">
-          <span className="text-3xl font-bold">{price}</span>
-          <span className="text-muted-foreground">/{period}</span>
+          <span className="text-4xl font-bold text-[var(--foreground)]">{price}</span>
+          <span className="text-[var(--muted-foreground)]">{period}</span>
         </div>
-        <CardDescription className="mt-2">{description}</CardDescription>
+        <CardDescription className="mt-2 text-[var(--muted-foreground)]">{description}</CardDescription>
       </CardHeader>
-      <CardContent>
-        <ul className="space-y-3 mb-6">
+      <CardContent className="p-6">
+        <ul className="space-y-3 mb-8">
           {features.map((feature, index) => (
-            <li key={index} className="flex items-center gap-2 text-sm">
-              <CheckCircle className="h-4 w-4 text-primary" />
-              {feature}
+            <li key={index} className="flex items-center gap-3 text-sm">
+              <CheckCircle className="h-4 w-4 text-[var(--primary)] flex-shrink-0" />
+              <span className="text-[var(--foreground)]">{feature}</span>
             </li>
           ))}
         </ul>
         {href ? (
           <Link href={href} className="block">
-            <Button className="w-full" variant={popular ? "default" : "outline"}>
+            <Button 
+              className={`w-full h-12 font-semibold button-press focus:ring-2 focus:ring-[var(--ring)] focus:ring-offset-2 ${
+                popular 
+                  ? "bg-[var(--primary)] text-[var(--primary-foreground)] hover:bg-[var(--primary)]/90" 
+                  : "border border-[var(--border)] text-[var(--foreground)] bg-[var(--card)] hover:bg-[var(--accent)]"
+              }`}
+            >
               {buttonText}
             </Button>
           </Link>
         ) : (
-          <Button className="w-full" variant={popular ? "default" : "outline"}>
+          <Button 
+            className={`w-full h-12 font-semibold button-press focus:ring-2 focus:ring-[var(--ring)] focus:ring-offset-2 ${
+              popular 
+                ? "bg-[var(--primary)] text-[var(--primary-foreground)] hover:bg-[var(--primary)]/90" 
+                : "border border-[var(--border)] text-[var(--foreground)] bg-[var(--card)] hover:bg-[var(--accent)]"
+            }`}
+          >
             {buttonText}
           </Button>
         )}
@@ -496,19 +621,6 @@ function PricingCard({ name, price, period, description, features, buttonText, p
   );
 }
 
-function Step({ index, title, desc }: { index: number; title: string; desc: string }) {
-  return (
-    <div className="rounded-lg border p-5">
-      <div className="flex items-center gap-3">
-        <div className="h-7 w-7 rounded-full bg-primary text-primary-foreground grid place-items-center text-xs font-semibold">
-          {index}
-        </div>
-        <div className="font-medium">{title}</div>
-      </div>
-      <p className="mt-2 text-sm text-muted-foreground">{desc}</p>
-    </div>
-  );
-}
 
 function SunIcon() {
   return <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v2"/><path d="M12 19v2"/><path d="M3 12h2"/><path d="M19 12h2"/><path d="M5.6 5.6 7 7"/><path d="M17 17l1.4 1.4"/><path d="M5.6 18.4 7 17"/><path d="M17 7l1.4-1.4"/><circle cx="12" cy="12" r="4"/></svg>;

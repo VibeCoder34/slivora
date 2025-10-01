@@ -34,6 +34,18 @@ export const SlidePlanSchema = z.object({
   projectTitle: z.string().min(1, 'Project title is required').max(120, 'Project title must be 120 characters or less'),
   language: z.string().min(2, 'Language must be at least 2 characters').max(40, 'Language must be 40 characters or less'),
   slides: z.array(SlideSchema).min(3, 'Minimum 3 slides required').max(30, 'Maximum 30 slides allowed'),
+  // Optional references for the whole presentation
+  references: z
+    .array(
+      z.object({
+        label: z.string().max(200).optional(),
+        url: z
+          .string()
+          .url('Reference URL must be a valid URL')
+          .max(1000, 'URL too long'),
+      })
+    )
+    .optional(),
 });
 
 export type SlidePlan = z.infer<typeof SlidePlanSchema>;
@@ -44,6 +56,7 @@ export const GenerateRequestSchema = z.object({
   language: z.string().min(2, 'Language must be at least 2 characters').max(40, 'Language must be 40 characters or less'),
   outline: z.string().min(1, 'Outline is required'),
   theme: z.string().min(1, 'Theme is required').optional(),
+  includeStudyNotes: z.boolean().optional(),
 });
 
 export type GenerateRequest = z.infer<typeof GenerateRequestSchema>;

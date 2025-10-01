@@ -104,10 +104,19 @@ export async function POST(
       return NextResponse.json(errorResponse, { status: 404 });
     }
     
+    // Get user's subscription plan for watermarking
+    const { data: userData } = await supabase
+      .from('users')
+      .select('subscription_plan')
+      .eq('id', user.id)
+      .single();
+    
+    const userPlan = userData?.subscription_plan || 'free';
+    
     // Check if project has slide plan
     if (!project.slide_plan) {
       const errorResponse: ErrorResponse = {
-        error: 'Project has no slide plan. Please generate slides first.',
+        error: 'Project has no slides generated. Please regenerate the project to create slides before exporting.',
       };
       return NextResponse.json(errorResponse, { status: 400 });
     }
@@ -139,22 +148,62 @@ export async function POST(
       // Generate PowerPoint file
       console.log('Starting PowerPoint generation...');
       console.log('Slide plan:', JSON.stringify(slidePlan, null, 2));
+      console.log('Project theme:', project.theme);
+      console.log('User plan:', userPlan);
       
-      const buffer = await buildPptxBuffer(slidePlan, project.theme);
+      // Validate slide plan structure
+      if (!slidePlan.slides || !Array.isArray(slidePlan.slides) || slidePlan.slides.length === 0) {
+        throw new Error('Invalid slide plan: no slides found');
+      }
+      
+      if (!slidePlan.projectTitle) {
+        throw new Error('Invalid slide plan: missing project title');
+      }
+      
+      const buffer = await buildPptxBuffer(slidePlan, project.theme, userPlan);
       console.log('PowerPoint generation completed, buffer size:', buffer.length);
+      
+      if (!buffer || buffer.length === 0) {
+        throw new Error('Generated PowerPoint buffer is empty');
+      }
       
       // Create filename
       const slug = createSlug(project.title);
       const filename = `${slug}-${projectId}.pptx`;
       const filePath = `${user.id}/${filename}`;
       
-      // Create service client for storage operations
-      const serviceSupabase = createServiceClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.SUPABASE_SERVICE_ROLE_KEY!
-      );
+    // Create service client for storage operations
+    console.log('Creating service client...');
+    console.log('Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL ? 'Set' : 'Missing');
+    console.log('Service Role Key:', process.env.SUPABASE_SERVICE_ROLE_KEY ? 'Set' : 'Missing');
+    
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      throw new Error('Missing required environment variables for storage operations');
+    }
+    
+    const serviceSupabase = createServiceClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_ROLE_KEY
+    );
+    
+    // Check if storage bucket exists
+    console.log('Checking storage bucket...');
+    const { data: buckets, error: bucketsError } = await serviceSupabase.storage.listBuckets();
+    if (bucketsError) {
+      console.error('Failed to list storage buckets:', bucketsError);
+      throw new Error(`Storage access failed: ${bucketsError.message}`);
+    }
+    
+    const decksBucket = buckets?.find(bucket => bucket.name === 'decks');
+    if (!decksBucket) {
+      console.error('Storage bucket "decks" not found. Available buckets:', buckets?.map(b => b.name));
+      throw new Error('Storage bucket "decks" not found');
+    }
+    
+    console.log('Storage bucket "decks" found');
       
-      // Upload to Supabase Storage
+    // Upload to Supabase Storage
+    console.log('Uploading file to storage:', filePath);
       const { data: uploadData, error: uploadError } = await serviceSupabase.storage
         .from('decks')
         .upload(filePath, buffer, {
@@ -165,12 +214,15 @@ export async function POST(
       if (uploadError) {
         console.error('Failed to upload file to storage:', uploadError);
         const errorResponse: ErrorResponse = {
-          error: 'Failed to upload file',
+          error: `Failed to upload file: ${uploadError.message}`,
         };
         return NextResponse.json(errorResponse, { status: 500 });
       }
       
+      console.log('File uploaded successfully:', uploadData);
+      
       // Create a signed URL for the file (valid for 1 hour)
+      console.log('Creating signed URL for file:', filePath);
       const { data: signedUrlData, error: signedUrlError } = await serviceSupabase.storage
         .from('decks')
         .createSignedUrl(filePath, 3600); // 1 hour expiry
@@ -178,10 +230,12 @@ export async function POST(
       if (signedUrlError) {
         console.error('Failed to create signed URL:', signedUrlError);
         const errorResponse: ErrorResponse = {
-          error: 'Failed to create download URL',
+          error: `Failed to create download URL: ${signedUrlError.message}`,
         };
         return NextResponse.json(errorResponse, { status: 500 });
       }
+      
+      console.log('Signed URL created successfully:', signedUrlData?.signedUrl);
       
       // Update project with file URL and increment export count
       const { error: updateError } = await supabase
@@ -221,8 +275,14 @@ export async function POST(
     } catch (generationError) {
       console.error('PowerPoint generation failed:', generationError);
       
+      // Provide more specific error information
+      let errorMessage = 'Export failed';
+      if (generationError instanceof Error) {
+        errorMessage = `Export failed: ${generationError.message}`;
+      }
+      
       const errorResponse: ErrorResponse = {
-        error: 'Export failed',
+        error: errorMessage,
       };
       return NextResponse.json(errorResponse, { status: 500 });
     }
@@ -230,8 +290,14 @@ export async function POST(
   } catch (error) {
     console.error('Export API error:', error);
     
+    // Provide more detailed error information
+    let errorMessage = 'Internal server error';
+    if (error instanceof Error) {
+      errorMessage = `Export failed: ${error.message}`;
+    }
+    
     const errorResponse: ErrorResponse = {
-      error: error instanceof Error ? error.message : 'Internal server error',
+      error: errorMessage,
     };
     
     return NextResponse.json(errorResponse, { status: 500 });

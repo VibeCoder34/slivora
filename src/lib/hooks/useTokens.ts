@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { SubscriptionPlan, ActionType } from '@/lib/config/pricing';
+import { useAuth } from './useAuth';
+import { createClient } from '@/lib/supabase/client';
 
 interface TokenInfo {
   userId: string;
@@ -43,6 +45,8 @@ interface TokenData {
 }
 
 export function useTokens() {
+  const { user, loading: authLoading, initializing } = useAuth();
+  
   const [tokenData, setTokenData] = useState<TokenData>({
     tokenInfo: null,
     usageHistory: null,
@@ -52,21 +56,121 @@ export function useTokens() {
   });
 
   const fetchTokenData = useCallback(async () => {
+    // Don't fetch if user is not authenticated or auth is still loading
+    if (!user || authLoading || initializing) {
+      return;
+    }
+
     try {
       setTokenData(prev => ({ ...prev, isLoading: true, error: null }));
       
-      const response = await fetch('/api/tokens');
+      const supabase = createClient();
       
-      if (!response.ok) {
-        throw new Error(`Failed to fetch token data: ${response.statusText}`);
+      // Fetch all token data in parallel with direct Supabase queries
+      const [userResult, usageResult, statsResult] = await Promise.all([
+        // Get user token info
+        supabase
+          .from('users')
+          .select(`
+            id,
+            current_tokens,
+            rollover_tokens,
+            subscription_plan,
+            tokens_reset_date,
+            total_tokens_used,
+            subscription_status
+          `)
+          .eq('id', user.id)
+          .single(),
+        
+        // Get recent usage history (last 10 entries)
+        supabase
+          .from('token_usage')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(10),
+        
+        // Get usage stats (aggregated data)
+        supabase
+          .from('token_usage')
+          .select('action_type, tokens_consumed, created_at')
+          .eq('user_id', user.id)
+      ]);
+
+      // Handle user data
+      if (userResult.error || !userResult.data) {
+        throw new Error('Failed to fetch user token info');
+      }
+
+      const userData = userResult.data;
+      const tokenInfo = {
+        userId: userData.id,
+        currentTokens: userData.current_tokens,
+        rolloverTokens: userData.rollover_tokens,
+        totalAvailableTokens: userData.current_tokens + userData.rollover_tokens,
+        subscriptionPlan: userData.subscription_plan as SubscriptionPlan,
+        tokensResetDate: userData.tokens_reset_date,
+        totalTokensUsed: userData.total_tokens_used,
+        subscriptionStatus: userData.subscription_status
+      };
+
+      // Handle usage history
+      const usageHistory = usageResult.data ? {
+        usage: usageResult.data.map(usage => ({
+          id: usage.id,
+          action_type: usage.action_type as ActionType,
+          tokens_consumed: usage.tokens_consumed,
+          project_id: usage.project_id,
+          metadata: usage.metadata,
+          created_at: usage.created_at
+        })),
+        totalPages: Math.ceil((usageResult.data.length || 0) / 10),
+        currentPage: 1
+      } : null;
+
+      // Calculate usage stats
+      let usageStats = null;
+      if (statsResult.data && statsResult.data.length > 0) {
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        
+        const totalTokensUsed = statsResult.data.reduce((sum, usage) => sum + usage.tokens_consumed, 0);
+        const tokensUsedThisMonth = statsResult.data
+          .filter(usage => new Date(usage.created_at) >= startOfMonth)
+          .reduce((sum, usage) => sum + usage.tokens_consumed, 0);
+        
+        const daysInMonth = Math.ceil((now.getTime() - startOfMonth.getTime()) / (1000 * 60 * 60 * 24));
+        const averageTokensPerDay = daysInMonth > 0 ? tokensUsedThisMonth / daysInMonth : 0;
+        
+        // Calculate most used actions
+        const actionCounts = statsResult.data.reduce((acc, usage) => {
+          const action = usage.action_type as ActionType;
+          if (!acc[action]) {
+            acc[action] = { count: 0, tokens: 0 };
+          }
+          acc[action].count += 1;
+          acc[action].tokens += usage.tokens_consumed;
+          return acc;
+        }, {} as Record<ActionType, { count: number; tokens: number }>);
+        
+        const mostUsedActions = Object.entries(actionCounts)
+          .map(([action, data]) => ({ action: action as ActionType, ...data }))
+          .sort((a, b) => b.tokens - a.tokens)
+          .slice(0, 5);
+        
+        usageStats = {
+          totalTokensUsed,
+          tokensUsedThisMonth,
+          averageTokensPerDay,
+          mostUsedActions
+        };
       }
       
-      const data = await response.json();
-      
       setTokenData({
-        tokenInfo: data.tokenInfo,
-        usageHistory: data.usageHistory,
-        usageStats: data.usageStats,
+        tokenInfo,
+        usageHistory,
+        usageStats,
         isLoading: false,
         error: null,
       });
@@ -78,7 +182,7 @@ export function useTokens() {
         error: error instanceof Error ? error.message : 'Unknown error',
       }));
     }
-  }, []);
+  }, [user, authLoading, initializing]);
 
   const purchaseTokens = useCallback(async (packageId: string, paymentReference?: string, paymentProvider?: string) => {
     try {
@@ -167,9 +271,20 @@ export function useTokens() {
   }, [fetchTokenData]);
 
   useEffect(() => {
-    // Start loading immediately, don't wait for dependencies
-    fetchTokenData();
-  }, []); // Remove fetchTokenData dependency to start loading immediately
+    // Only fetch token data when user is authenticated and auth is not loading
+    if (user && !authLoading && !initializing) {
+      fetchTokenData();
+    } else if (!user && !authLoading && !initializing) {
+      // User is not authenticated, clear token data
+      setTokenData({
+        tokenInfo: null,
+        usageHistory: null,
+        usageStats: null,
+        isLoading: false,
+        error: null,
+      });
+    }
+  }, [user, authLoading, initializing, fetchTokenData]);
 
   return {
     ...tokenData,

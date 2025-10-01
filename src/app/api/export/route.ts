@@ -85,8 +85,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(errorResponse, { status: 401 });
     }
     
+    // Get user's subscription plan for watermarking
+    const { data: userData } = await supabase
+      .from('users')
+      .select('subscription_plan')
+      .eq('id', user.id)
+      .single();
+    
+    const userPlan = userData?.subscription_plan || 'free';
+    
     // Generate PowerPoint file
-    const buffer = await buildPptxBuffer(slidePlan);
+    const buffer = await buildPptxBuffer(slidePlan, undefined, userPlan);
     const filename = generateFilename(slidePlan);
     
     // Return the file as a download

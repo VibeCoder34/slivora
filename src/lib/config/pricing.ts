@@ -12,7 +12,8 @@ export type ActionType =
   | 'add_edit_slide'
   | 'export_presentation'
   | 'generate_analytics'
-  | 'regenerate_slides';
+  | 'regenerate_slides'
+  | 'generate_study_notes';
 
 export interface SubscriptionPlanConfig {
   id: SubscriptionPlan;
@@ -24,6 +25,7 @@ export interface SubscriptionPlanConfig {
   popular?: boolean;
   stripeProductId?: string; // For future payment integration
   availableThemes: string[]; // List of theme keys available for this plan
+  contactUs?: boolean; // If true, show "Contact us" instead of price
 }
 
 export interface TokenCostConfig {
@@ -52,9 +54,9 @@ export const SUBSCRIPTION_PLANS: Record<SubscriptionPlan, SubscriptionPlanConfig
     features: [
       '50 tokens per month',
       'Create presentations',
-      'Export to PDF',
+      'Export to PPTX',
       '2 presentation themes',
-      'Community support'
+      'Basic email support'
     ],
     availableThemes: ['minimal', 'modern'] // Free users get only 2 themes
   },
@@ -66,11 +68,10 @@ export const SUBSCRIPTION_PLANS: Record<SubscriptionPlan, SubscriptionPlanConfig
     rolloverPercentage: 10,
     features: [
       '500 tokens per month',
-      '10% token rollover',
-      'All export formats',
+      '10% token rollover (unused tokens carry to next month)',
+      'Export to PPTX',
       'All 5 presentation themes',
-      'Priority support',
-      'Custom branding'
+      'Priority email support'
     ],
     popular: true,
     stripeProductId: 'price_pro_monthly',
@@ -80,16 +81,15 @@ export const SUBSCRIPTION_PLANS: Record<SubscriptionPlan, SubscriptionPlanConfig
     id: 'business',
     name: 'Business',
     price: 49,
-    monthlyTokens: 2500,
+    monthlyTokens: 5000,
     rolloverPercentage: 15,
     features: [
-      '2,500 tokens per month',
+      '5,000 tokens per month',
       '15% token rollover',
       'Everything in Pro',
-      'Team collaboration',
-      'Advanced analytics',
-      'API access',
-      'Dedicated support'
+      'Custom branding',
+      'Early access to new features',
+      'Dedicated email support'
     ],
     stripeProductId: 'price_business_monthly',
     availableThemes: ['minimal', 'modern', 'corporate', 'colorful', 'creative'] // Business users get all themes
@@ -97,20 +97,20 @@ export const SUBSCRIPTION_PLANS: Record<SubscriptionPlan, SubscriptionPlanConfig
   enterprise: {
     id: 'enterprise',
     name: 'Enterprise',
-    price: 99,
+    price: 0,
     monthlyTokens: 10000,
     rolloverPercentage: 20,
     features: [
-      '10,000 tokens per month',
+      '10,000+ tokens per month',
       '20% token rollover',
       'Everything in Business',
-      'White-label options',
-      'Custom integrations',
-      'SLA guarantee',
-      '24/7 phone support'
+      'Custom agreements',
+      'Roadmap influence (help shape future features)',
+      'Custom support options'
     ],
     stripeProductId: 'price_enterprise_monthly',
-    availableThemes: ['minimal', 'modern', 'corporate', 'colorful', 'creative'] // Enterprise users get all themes
+    availableThemes: ['minimal', 'modern', 'corporate', 'colorful', 'creative'], // Enterprise users get all themes
+    contactUs: true
   }
 };
 
@@ -140,6 +140,11 @@ export const TOKEN_COSTS: Record<ActionType, TokenCostConfig> = {
     action: 'regenerate_slides',
     tokens: 10,
     description: 'Regenerate presentation slides'
+  },
+  generate_study_notes: {
+    action: 'generate_study_notes',
+    tokens: 5,
+    description: 'Generate study notes from slides'
   }
 };
 

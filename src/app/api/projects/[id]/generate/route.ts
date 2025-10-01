@@ -93,13 +93,14 @@ export async function POST(
     // Check if user has enough tokens for regenerating slides
     const tokenCheck = await checkUserTokens(user.id, 'regenerate_slides', projectId);
     if (!tokenCheck.hasEnoughTokens) {
-      return NextResponse.json({
+      const errorResponse: ErrorResponse = {
         error: 'Insufficient tokens',
         message: tokenCheck.message,
         currentPlan: tokenCheck.currentPlan,
         availableTokens: tokenCheck.availableTokens,
         requiredTokens: tokenCheck.requiredTokens,
-      }, { status: 402 }); // 402 Payment Required
+      };
+      return NextResponse.json(errorResponse, { status: 402 }); // 402 Payment Required
     }
     
     // Set project status to generating

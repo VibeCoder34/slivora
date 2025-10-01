@@ -19,8 +19,11 @@ import {
   Calendar,
   Download,
   RefreshCw,
-  AlertCircle
+  AlertCircle,
+  BookOpen
 } from 'lucide-react'
+import { Lock as LockIcon } from 'lucide-react'
+import { useTokens } from '@/lib/hooks/useTokens'
 
 export default function ProjectPage() {
   const params = useParams()
@@ -35,6 +38,7 @@ export default function ProjectPage() {
   const [saving, setSaving] = useState(false)
 
   const { user } = useAuth()
+  const { tokenInfo } = useTokens()
   const { fetchSlides, updateSlide, deleteSlide, createSlide, regenerateProject, exportProject } = useProjects()
 
   useEffect(() => {
@@ -231,57 +235,73 @@ export default function ProjectPage() {
       {/* Header */}
       <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="mx-auto max-w-7xl px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" onClick={() => router.push('/dashboard')}>
+          <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
+            <Button variant="ghost" onClick={() => router.push('/dashboard')} className="shrink-0">
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Back
+              <span className="hidden sm:inline">Back</span>
             </Button>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-lg font-semibold">{project.title}</h1>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className="text-sm sm:text-lg font-semibold truncate">{project.title}</h1>
                 <StatusBadge status={project.status} />
               </div>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-xs sm:text-sm text-muted-foreground truncate">
                 {project.slides_count || slides.length} slides • Created {new Date(project.created_at).toLocaleDateString()}
               </p>
               {project.status === 'error' && project.generate_error && (
-                <div className="flex items-center gap-2 text-sm text-red-600 mt-1">
-                  <AlertCircle className="h-4 w-4" />
-                  {project.generate_error}
+                <div className="flex items-center gap-2 text-xs sm:text-sm text-red-600 mt-1">
+                  <AlertCircle className="h-3 w-3 sm:h-4 sm:w-4" />
+                  <span className="truncate">{project.generate_error}</span>
                 </div>
               )}
             </div>
           </div>
           
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
             {project.status === 'ready' && (
               <>
-                <Button variant="outline" onClick={handleRegenerateProject}>
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  Regenerate
+                <Button variant="outline" size="sm" onClick={() => router.push(`/project/${projectId}/references`)} className="hidden sm:flex">
+                  <BookOpen className="h-4 w-4 mr-2" />
+                  <span className="hidden md:inline">References</span>
                 </Button>
-                <Button onClick={handleExportProject}>
+                {tokenInfo?.subscriptionPlan === 'pro' || tokenInfo?.subscriptionPlan === 'business' || tokenInfo?.subscriptionPlan === 'enterprise' ? (
+                  <Button variant="outline" size="sm" onClick={() => window.open(`/api/projects/${projectId}/study-notes`, '_blank')} className="hidden sm:flex">
+                    <FileText className="h-4 w-4 mr-2" />
+                    <span className="hidden lg:inline">Download Study Notes</span>
+                  </Button>
+                ) : (
+                  <Button variant="outline" size="sm" onClick={() => router.push('/service')} className="hidden sm:flex">
+                    <LockIcon className="h-4 w-4 mr-2" />
+                    <span className="hidden lg:inline">Study Notes (Pro)</span>
+                  </Button>
+                )}
+                <Button variant="outline" size="sm" onClick={handleRegenerateProject}>
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  <span className="hidden sm:inline">Regenerate</span>
+                </Button>
+                <Button size="sm" onClick={handleExportProject}>
                   <Download className="h-4 w-4 mr-2" />
-                  Export PPTX
+                  <span className="hidden sm:inline">Export PPTX</span>
                 </Button>
               </>
             )}
             {project.status === 'error' && (
-              <Button onClick={handleRegenerateProject}>
+              <Button size="sm" onClick={handleRegenerateProject}>
                 <RefreshCw className="h-4 w-4 mr-2" />
-                Retry Generation
+                <span className="hidden sm:inline">Retry Generation</span>
               </Button>
             )}
             {project.status === 'generating' && (
-              <div className="flex items-center gap-2 text-sm text-blue-600">
+              <div className="flex items-center gap-2 text-xs sm:text-sm text-blue-600">
                 <Loader2 className="h-4 w-4 animate-spin" />
-                Generating slides...
+                <span className="hidden sm:inline">Generating slides...</span>
+                <span className="sm:hidden">Generating...</span>
               </div>
             )}
             {project.status === 'draft' && (
-              <Button onClick={handleAddSlide}>
+              <Button size="sm" onClick={handleAddSlide}>
                 <Plus className="h-4 w-4 mr-2" />
-                Add Slide
+                <span className="hidden sm:inline">Add Slide</span>
               </Button>
             )}
           </div>

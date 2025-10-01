@@ -28,6 +28,7 @@ interface NewProject {
   outline_text: string;
   language: string;
   theme: string;
+  includeStudyNotes?: boolean;
 }
 
 interface NewProjectModalProps {
@@ -38,6 +39,7 @@ interface NewProjectModalProps {
     outline_text: string;
     language: string;
     theme: string;
+    includeStudyNotes?: boolean;
   }) => Promise<{ projectId?: string; error?: string }>;
   loading?: boolean;
   currentPlan?: SubscriptionPlan;
@@ -56,7 +58,8 @@ export function NewProjectModal({
     title: '',
     outline_text: '',
     language: 'en',
-    theme: 'minimal'
+    theme: 'minimal',
+    includeStudyNotes: false,
   });
   const [generatedComment, setGeneratedComment] = React.useState<string | null>(null);
   const [generatingComment, setGeneratingComment] = React.useState(false);
@@ -99,6 +102,7 @@ export function NewProjectModal({
         outline_text: newProject.outline_text,
         language: newProject.language,
         theme: newProject.theme,
+        includeStudyNotes: newProject.includeStudyNotes,
       });
       
       if (result?.projectId) {
@@ -280,6 +284,31 @@ export function NewProjectModal({
               required
               disabled={loading}
             />
+          </div>
+
+          {/* Pro: Study Notes Option */}
+          <div className="p-3 rounded-md border flex items-start gap-3">
+            <input
+              id="includeStudyNotes"
+              type="checkbox"
+              className="mt-1"
+              checked={!!newProject.includeStudyNotes}
+              onChange={(e) => setNewProject({ ...newProject, includeStudyNotes: e.target.checked })}
+              disabled={loading || (currentPlan === 'free')}
+            />
+            <div className="space-y-1">
+              <Label htmlFor="includeStudyNotes" className="flex items-center gap-2">
+                Study Notes (Pro)
+                {currentPlan === 'free' && (
+                  <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+                    <Lock className="h-3 w-3" /> Upgrade to enable
+                  </span>
+                )}
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                Generate concise study notes derived from your slides. Consumes extra tokens.
+              </p>
+            </div>
           </div>
 
           {/* AI Comment Generation Section */}

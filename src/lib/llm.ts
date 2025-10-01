@@ -1,6 +1,7 @@
 import OpenAI from 'openai';
 import { env } from './env';
 import { SlidePlan, SlidePlanSchema, GenerateRequest } from '../types/slide-plan';
+import fetch from 'node-fetch';
 
 // Initialize OpenAI client
 const openai = new OpenAI({
@@ -10,7 +11,7 @@ const openai = new OpenAI({
 /**
  * System prompt for SlideSmith - the presentation architect
  */
-const SYSTEM_PROMPT = `You are SlideSmith, an expert presentation architect. Given a project title, language, and outline, return a normalized JSON SlidePlan. 
+const SYSTEM_PROMPT = `You are SlideSmith, an expert presentation architect. Given a project title, language, and outline, return a normalized JSON SlidePlan.
 
 Key requirements:
 - Each slide MUST have a unique "id" field (e.g., "slide-1", "slide-2", etc.)
@@ -24,7 +25,12 @@ Key requirements:
 - Ensure bullets are provided for "title-bullets" layout
 - Make content engaging and professional
 
-Return ONLY valid JSON of type SlidePlan with keys: projectTitle, language, slides[]. Each slide must have: id, title, bullets (optional), speakerNotes (optional), layout (optional).`;
+References requirements:
+- Add a final slide titled "References" listing credible sources used
+- Also populate a top-level "references" array with { url, label? } for each source
+- Prefer authoritative sources (e.g., .gov, .edu, reputable journals, official docs)
+
+Return ONLY valid JSON of type SlidePlan with keys: projectTitle, language, slides[], references?[]. Each slide must have: id, title, bullets (optional), speakerNotes (optional), layout (optional).`;
 
 /**
  * Generate user prompt from request parameters
@@ -35,7 +41,11 @@ Language: ${language}
 Presentation Outline (bullets):
 ${outline}
 
-IMPORTANT: Each slide must have a unique "id" field (e.g., "slide-1", "slide-2", etc.). This is required for the presentation system to work properly.`;
+IMPORTANT formatting:
+- Each slide must have a unique "id" field (e.g., "slide-1", "slide-2", etc.)
+- Include a final "References" slide with bullet points as source titles
+- Include a top-level references array with URLs and optional labels
+`;
 }
 
 /**
@@ -162,7 +172,9 @@ export async function generateSlidePlan({
     const validatedPlan = SlidePlanSchema.parse(parsed);
     console.log('Zod validation successful:', validatedPlan);
     
-    return validatedPlan;
+    // Second-pass verification/refinement to reduce factual errors
+    const refined = await verifyAndRefineSlidePlan(validatedPlan);
+    return refined;
   } catch (error) {
     console.error('generateSlidePlan error:', error);
     
@@ -181,8 +193,69 @@ export async function generateSlidePlan({
       }
     }
 
-    // Re-throw other errors
-    throw error;
+    // Handle specific error cases with better messages
+    if (error instanceof Error) {
+      if (error.message.includes('No response from OpenAI')) {
+        throw new Error('AI service is temporarily unavailable. Please try again in a few moments.');
+      } else if (error.message.includes('rate limit')) {
+        throw new Error('Too many requests. Please wait a moment before trying again.');
+      } else if (error.message.includes('insufficient_quota')) {
+        throw new Error('AI service quota exceeded. Please try again later.');
+      } else if (error.message.includes('timeout')) {
+        throw new Error('Request timed out. Please try again.');
+      }
+    }
+
+    // Re-throw other errors with a generic message
+    throw new Error(`Failed to generate presentation: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}
+
+/**
+ * Verify and refine the slide plan:
+ * - Ensure factual consistency
+ * - Remove/adjust dubious claims
+ * - Ensure references are aligned and include authoritative URLs
+ */
+async function verifyAndRefineSlidePlan(plan: SlidePlan): Promise<SlidePlan> {
+  try {
+    const instruction = `You are a rigorous fact-checker. Review the provided SlidePlan JSON.
+Goals:
+- Identify and correct factual inaccuracies or unverified claims.
+- Keep persuasive or stylistic text, but adjust facts to be accurate.
+- Ensure a final slide titled "References" exists with 5–10 credible sources where possible.
+- Ensure top-level references[] contains canonical URLs and optional labels.
+- Return ONLY corrected JSON in the same schema.`;
+
+    const response = await openai.chat.completions.create({
+      model: env.OPENAI_MODEL,
+      messages: [
+        { role: 'system', content: instruction },
+        { role: 'user', content: JSON.stringify(plan) },
+      ],
+      temperature: 0.2,
+      max_tokens: 4000,
+      ...(env.OPENAI_MODEL.includes('gpt-4') && {
+        response_format: { type: 'json_object' },
+      }),
+    });
+
+    const content = response.choices[0]?.message?.content || '';
+    const fixedJson = extractJsonFromResponse(content);
+    const parsed = JSON.parse(fixedJson);
+
+    // Ensure slide IDs remain present after refinement
+    if (parsed.slides && Array.isArray(parsed.slides)) {
+      parsed.slides = parsed.slides.map((slide: any, index: number) => ({
+        ...slide,
+        id: slide.id || `slide-${index + 1}`,
+      }));
+    }
+
+    return SlidePlanSchema.parse(parsed);
+  } catch (err) {
+    console.warn('verifyAndRefineSlidePlan failed, returning original plan:', err);
+    return plan;
   }
 }
 
@@ -252,4 +325,55 @@ export async function testOpenAIConnection(): Promise<boolean> {
     console.error('OpenAI connection test failed:', error);
     return false;
   }
+}
+
+export interface StudyNotes {
+  markdown: string;
+  quiz?: { question: string; options?: string[]; answer?: string }[];
+}
+
+export async function generateStudyNotes(plan: SlidePlan, language: string): Promise<StudyNotes> {
+  const prompt = `Create concise study notes in Markdown derived strictly from the following SlidePlan JSON.
+Requirements:
+- Use clear, structured bullet points.
+- Include key concepts & definitions.
+- Provide a 1-2 sentence summary for each slide.
+- Add short extra insights/examples only if relevant.
+- At the end, include 3 sample quiz questions.
+- Write in ${language}.
+
+Return ONLY Markdown text for the notes, followed by a JSON block with 3 quiz questions in the format { question, answer }.
+
+SlidePlan JSON:\n${JSON.stringify(plan)}`;
+
+  const response = await openai.chat.completions.create({
+    model: env.OPENAI_MODEL,
+    messages: [
+      { role: 'system', content: 'You are an expert study coach creating accurate, concise study notes.' },
+      { role: 'user', content: prompt },
+    ],
+    temperature: 0.4,
+    max_tokens: 2000,
+  });
+  const text = response.choices[0]?.message?.content || '';
+
+  // Heuristically split markdown and JSON quiz at the last JSON block if present
+  let markdown = text.trim();
+  let quiz: { question: string; options?: string[]; answer?: string }[] | undefined;
+  try {
+    const jsonStart = text.lastIndexOf('{');
+    const jsonEnd = text.lastIndexOf('}');
+    if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
+      const jsonChunk = text.slice(jsonStart, jsonEnd + 1);
+      const parsed = JSON.parse(jsonChunk);
+      if (Array.isArray(parsed?.questions)) {
+        quiz = parsed.questions;
+        markdown = text.slice(0, jsonStart).trim();
+      }
+    }
+  } catch {
+    // ignore parsing errors and return markdown only
+  }
+
+  return { markdown, quiz };
 }

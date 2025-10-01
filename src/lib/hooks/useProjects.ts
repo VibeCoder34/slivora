@@ -19,6 +19,7 @@ export interface Project {
   pptx_url: string | null
   export_count: number
   created_at: string
+  study_notes_md?: string | null
 }
 
 export interface Slide {
@@ -78,7 +79,47 @@ export function useProjects(userId?: string) {
       console.log('useProjects: Database response:', { data: data?.length, error })
       if (error) throw error
 
-      setProjects(data || [])
+      // For projects without slide_plan but with slide_count > 0, try to load from individual slides
+      const projectsWithSlides = await Promise.all(
+        (data || []).map(async (project) => {
+          if (project.status === 'ready' && !project.slide_plan && project.slide_count > 0) {
+            try {
+              console.log('useProjects: Loading individual slides for project:', project.id)
+              const { data: slidesData, error: slidesError } = await supabase
+                .from('slides')
+                .select('*')
+                .eq('project_id', project.id)
+                .order('slide_number', { ascending: true })
+
+              if (!slidesError && slidesData && slidesData.length > 0) {
+                // Convert individual slides back to slide_plan format
+                const slidePlan = {
+                  projectTitle: project.title,
+                  language: project.language,
+                  slides: slidesData.map(slide => {
+                    const content = JSON.parse(slide.content)
+                    return {
+                      id: content.id || slide.id,
+                      title: content.title || '',
+                      bullets: content.bullets || [],
+                      speakerNotes: content.speakerNotes || '',
+                      layout: content.layout || 'title-bullets'
+                    }
+                  })
+                }
+                
+                console.log('useProjects: Reconstructed slide_plan for project:', project.id)
+                return { ...project, slide_plan: slidePlan }
+              }
+            } catch (err) {
+              console.error('useProjects: Error loading individual slides for project:', project.id, err)
+            }
+          }
+          return project
+        })
+      )
+
+      setProjects(projectsWithSlides)
       console.log('useProjects: Projects set successfully')
     } catch (err) {
       console.error('useProjects: Error fetching projects:', err)
@@ -331,7 +372,22 @@ export function useProjects(userId?: string) {
       const result = await response.json()
 
       if (!response.ok) {
-        throw new Error(result.error || 'Failed to regenerate project')
+        // Handle specific error cases
+        if (response.status === 402) {
+          // Insufficient tokens
+          throw new Error(`Insufficient tokens: ${result.message || 'You need more tokens to regenerate this project'}`)
+        } else if (response.status === 429) {
+          // Rate limit exceeded
+          throw new Error('Too many requests. Please wait a moment before trying again.')
+        } else if (response.status === 404) {
+          // Project not found
+          throw new Error('Project not found')
+        } else if (response.status === 500) {
+          // Server error
+          throw new Error(result.error || 'Server error occurred. Please try again.')
+        } else {
+          throw new Error(result.error || 'Failed to regenerate project')
+        }
       }
 
       // Update local state with the updated project
@@ -350,6 +406,7 @@ export function useProjects(userId?: string) {
   const exportProject = async (projectId: string) => {
     try {
       setError(null)
+      console.log('useProjects: Starting export for project:', projectId)
 
       const response = await fetch(`/api/projects/${projectId}/export`, {
         method: 'POST',
@@ -358,10 +415,15 @@ export function useProjects(userId?: string) {
         },
       })
 
+      console.log('useProjects: Export response status:', response.status)
+
       const result = await response.json()
+      console.log('useProjects: Export response data:', result)
 
       if (!response.ok) {
-        throw new Error(result.error || 'Failed to export project')
+        const errorMessage = result.error || `Export failed with status ${response.status}`
+        console.error('useProjects: Export failed:', errorMessage)
+        throw new Error(errorMessage)
       }
 
       // Update local state with the updated project (export_count)
@@ -375,6 +437,7 @@ export function useProjects(userId?: string) {
       return { data: result, error: null }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'An error occurred'
+      console.error('useProjects: Export error:', errorMessage)
       setError(errorMessage)
       return { data: null, error: errorMessage }
     }

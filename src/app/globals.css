@@ -162,3 +162,64 @@
     letter-spacing: var(--tracking-normal);
   }
 }
+
+/* Custom animations and motion preferences */
+@layer utilities {
+  /* Reduced motion support */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  /* Smooth transitions for interactive elements */
+  .transition-smooth {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Hover effects for cards */
+  .card-hover {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .card-hover:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+  }
+
+  /* Button press animation */
+  .button-press {
+    transition: transform 0.1s ease;
+  }
+
+  .button-press:active {
+    transform: scale(0.98);
+  }
+
+  /* Slide preview animations */
+  .slide-preview {
+    transition: transform 0.3s ease, rotate 0.3s ease;
+  }
+
+  .slide-preview:hover {
+    transform: scale(1.05) translateY(-2px);
+  }
+
+  /* Parallax effect for hero slides */
+  .parallax-container:hover .slide-1 {
+    transform: rotate(-1deg) translateY(-4px) scale(1.02);
+  }
+
+  .parallax-container:hover .slide-2 {
+    transform: rotate(0deg) translateY(-24px) scale(1.02);
+  }
+
+  .parallax-container:hover .slide-3 {
+    transform: rotate(0deg) translateY(-44px) scale(1.02);
+  }
+}
