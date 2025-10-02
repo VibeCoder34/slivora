@@ -15,6 +15,11 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Slivora - AI Presentation Generator",
   description: "Create stunning presentations in minutes with AI-powered content generation",
+  icons: {
+    icon: "/slivoralogo.png",
+    shortcut: "/slivoralogo.png",
+    apple: "/slivoralogo.png",
+  },
 };
 
 export default function RootLayout({
