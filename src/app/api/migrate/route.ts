@@ -1,11 +1,11 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
 /**
  * GET /api/migrate
  * Check if migration is needed
  */
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     console.log('=== MIGRATION CHECK API ROUTE CALLED ===');
     
@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
     );
     
     // Try to query a project to see if the new columns exist
-    const { data: testProject, error: testError } = await supabase
+    const { error: testError } = await supabase
       .from('projects')
       .select('id, status, slide_plan, slides_count')
       .limit(1);

@@ -1,7 +1,7 @@
 import OpenAI from 'openai';
 import { env } from './env';
 import { SlidePlan, SlidePlanSchema, GenerateRequest } from '../types/slide-plan';
-import fetch from 'node-fetch';
+// import fetch from 'node-fetch';
 
 // Initialize OpenAI client
 const openai = new OpenAI({
@@ -105,9 +105,9 @@ Please return ONLY the corrected JSON object.`;
     
     // Ensure each slide has an ID
     if (parsed.slides && Array.isArray(parsed.slides)) {
-      parsed.slides = parsed.slides.map((slide: unknown, index: number) => ({
+      parsed.slides = parsed.slides.map((slide: Record<string, unknown>, index: number) => ({
         ...slide,
-        id: slide.id || `slide-${index + 1}`
+        id: slide?.id || `slide-${index + 1}`
       }));
     }
     
@@ -146,7 +146,7 @@ export async function generateSlidePlan({
       }),
     });
 
-    const responseText = response.choices[0]?.message?.content;
+    const responseText = (response as { choices: Array<{ message?: { content?: string } }> }).choices[0]?.message?.content;
     if (!responseText) {
       throw new Error('No response from OpenAI');
     }
@@ -161,9 +161,9 @@ export async function generateSlidePlan({
 
     // Ensure each slide has an ID
     if (parsed.slides && Array.isArray(parsed.slides)) {
-      parsed.slides = parsed.slides.map((slide: unknown, index: number) => ({
+      parsed.slides = parsed.slides.map((slide: Record<string, unknown>, index: number) => ({
         ...slide,
-        id: slide.id || `slide-${index + 1}`
+        id: slide?.id || `slide-${index + 1}`
       }));
     }
 
@@ -181,7 +181,7 @@ export async function generateSlidePlan({
     // If it's a Zod validation error, try to repair the JSON
     if (error instanceof Error && error.message.includes('validation') && response) {
       try {
-        const responseText = response.choices[0]?.message?.content || '';
+        const responseText = (response as { choices: Array<{ message?: { content?: string } }> }).choices[0]?.message?.content || '';
         return await repairJson(
           createUserPrompt(title, language, outline),
           responseText,
@@ -246,9 +246,9 @@ Goals:
 
     // Ensure slide IDs remain present after refinement
     if (parsed.slides && Array.isArray(parsed.slides)) {
-      parsed.slides = parsed.slides.map((slide: unknown, index: number) => ({
+      parsed.slides = parsed.slides.map((slide: Record<string, unknown>, index: number) => ({
         ...slide,
-        id: slide.id || `slide-${index + 1}`,
+        id: slide?.id || `slide-${index + 1}`,
       }));
     }
 

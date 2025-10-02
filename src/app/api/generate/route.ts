@@ -1,10 +1,10 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
 import { buildPptxBuffer } from '@/lib/pptx';
 import { SlidePlan } from '@/types/slide-plan';
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     // Read the logo file and convert to base64 data URL
     const logoPath = path.join(process.cwd(), 'public', 'slivoralogonoback.png');

@@ -9,7 +9,7 @@ const CommentRequestSchema = z.object({
   outline: z.string().min(1, 'Outline is required'),
 });
 
-type CommentRequest = z.infer<typeof CommentRequestSchema>;
+// type CommentRequest = z.infer<typeof CommentRequestSchema>;
 
 interface ErrorResponse {
   error: string;

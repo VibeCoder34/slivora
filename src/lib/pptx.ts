@@ -1,6 +1,6 @@
 import PptxGenJS from 'pptxgenjs';
 import { SlidePlan, Slide } from '../types/slide-plan';
-import { THEMES, getTheme, getRandomTheme, ThemeConfig } from './themes';
+import { getTheme, getRandomTheme, ThemeConfig } from './themes';
 
 // NOTE: make it reassignable (we change the reference; we DO NOT mutate)
 let CURRENT_THEME: ThemeConfig = getRandomTheme();
@@ -33,7 +33,7 @@ function createSlug(title: string): string {
 // A consistent safe content grid to prevent collisions
 const SAFE = { x: 0.8, right: 9.2, top: 0.7, bottom: 5.2 };
 const CONTENT_W = SAFE.right - SAFE.x; // 8.4"
-const LINE_H = 0.6; // default logical line height for layout scaffolding
+// const LINE_H = 0.6; // default logical line height for layout scaffolding
 
 // =====================
 // Text helper functions

@@ -53,7 +53,7 @@ export async function updateSession(request: NextRequest) {
         url.pathname = '/auth'
         return NextResponse.redirect(url)
       }
-    } catch (error) {
+    } catch {
       // If auth check fails, redirect to auth page
       const url = request.nextUrl.clone()
       url.pathname = '/auth'

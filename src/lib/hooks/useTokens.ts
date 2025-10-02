@@ -246,7 +246,7 @@ export function useTokens() {
     }
   }, [fetchTokenData]);
 
-  const checkTokensForAction = useCallback(async (actionType: ActionType, projectId?: string) => {
+  const checkTokensForAction = useCallback(async (actionType: ActionType) => {
     if (!tokenData.tokenInfo) {
       return { hasEnoughTokens: false, message: 'Token info not available' };
     }
@@ -303,6 +303,7 @@ function getActionCost(actionType: ActionType): number {
     export_presentation: 3,
     generate_analytics: 8,
     regenerate_slides: 10,
+    generate_study_notes: 5,
   };
   return costs[actionType] || 0;
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -16,7 +16,6 @@ import {
   Save,
   Loader2,
   FileText,
-  Calendar,
   Download,
   RefreshCw,
   AlertCircle,
@@ -24,6 +23,14 @@ import {
 } from 'lucide-react'
 import { Lock as LockIcon } from 'lucide-react'
 import { useTokens } from '@/lib/hooks/useTokens'
+
+interface AISlide {
+  id?: string
+  title?: string
+  bullets?: string[]
+  speakerNotes?: string
+  layout?: string
+}
 
 export default function ProjectPage() {
   const params = useParams()
@@ -37,17 +44,11 @@ export default function ProjectPage() {
   const [slideContent, setSlideContent] = useState('')
   const [saving, setSaving] = useState(false)
 
-  const { user } = useAuth()
+  const { } = useAuth()
   const { tokenInfo } = useTokens()
   const { fetchSlides, updateSlide, deleteSlide, createSlide, regenerateProject, exportProject } = useProjects()
 
-  useEffect(() => {
-    if (projectId) {
-      loadProjectData()
-    }
-  }, [projectId])
-
-  const loadProjectData = async () => {
+  const loadProjectData = useCallback(async () => {
     try {
       setLoading(true)
       console.log('Loading project data for ID:', projectId)
@@ -77,15 +78,15 @@ export default function ProjectPage() {
       
       // If project has AI-generated slides, use those
       if (projectData.slide_plan && projectData.slide_plan.slides) {
-        const aiSlides = projectData.slide_plan.slides.map((slide: unknown, index: number) => ({
-          id: slide.id || `slide-${index}`,
+        const aiSlides = projectData.slide_plan.slides.map((slide: AISlide, index: number) => ({
+          id: slide?.id || `slide-${index}`,
           project_id: projectId,
           slide_number: index + 1,
           content: JSON.stringify({
-            title: slide.title,
-            bullets: slide.bullets || [],
-            speakerNotes: slide.speakerNotes || '',
-            layout: slide.layout || 'title-bullets'
+            title: slide?.title || '',
+            bullets: slide?.bullets || [],
+            speakerNotes: slide?.speakerNotes || '',
+            layout: slide?.layout || 'title-bullets'
           }),
           created_at: new Date().toISOString()
         }))
@@ -104,7 +105,13 @@ export default function ProjectPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [projectId, fetchSlides])
+
+  useEffect(() => {
+    if (projectId) {
+      loadProjectData()
+    }
+  }, [projectId, loadProjectData])
 
   const handleEditSlide = (slide: Slide) => {
     setEditingSlide(slide.id)
@@ -325,7 +332,7 @@ export default function ProjectPage() {
           </Card>
         ) : (
           <div className="space-y-6">
-            {slides.map((slide, index) => (
+            {slides.map((slide) => (
               <Card key={slide.id} className="relative">
                 <CardHeader>
                   <div className="flex items-center justify-between">

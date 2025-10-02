@@ -14,19 +14,19 @@ const GENERATE_RATE_LIMIT = {
 /**
  * Get client IP address from request headers
  */
-function getClientIP(request: NextRequest): string {
-  const forwarded = request.headers.get('x-forwarded-for');
-  if (forwarded) {
-    return forwarded.split(',')[0].trim();
-  }
-  
-  const realIP = request.headers.get('x-real-ip');
-  if (realIP) {
-    return realIP;
-  }
-  
-  return 'anon';
-}
+// function getClientIP(request: NextRequest): string {
+//   const forwarded = request.headers.get('x-forwarded-for');
+//   if (forwarded) {
+//     return forwarded.split(',')[0].trim();
+//   }
+//   
+//   const realIP = request.headers.get('x-real-ip');
+//   if (realIP) {
+//     return realIP;
+//   }
+//   
+//   return 'anon';
+// }
 
 /**
  * POST /api/projects/[id]/generate
@@ -57,8 +57,8 @@ export async function POST(
       return NextResponse.json(errorResponse, { status: 401 });
     }
     
-    // Get client IP for rate limiting
-    const clientIP = getClientIP(request);
+    // Get client IP for rate limiting (currently unused)
+    // const clientIP = getClientIP(request);
     const rateLimitKey = `gen:${user.id}`;
     
     // Check rate limit
@@ -91,7 +91,7 @@ export async function POST(
     }
     
     // Check if user has enough tokens for regenerating slides
-    const tokenCheck = await checkUserTokens(user.id, 'regenerate_slides', projectId);
+    const tokenCheck = await checkUserTokens(user.id, 'regenerate_slides');
     if (!tokenCheck.hasEnoughTokens) {
       const errorResponse: ErrorResponse = {
         error: 'Insufficient tokens',

@@ -7,7 +7,6 @@ import { Badge } from "@/components/ui/badge";
 import { 
   Coins, 
   TrendingUp, 
-  Calendar, 
   Zap, 
   Crown, 
   ArrowUpRight,
@@ -15,9 +14,10 @@ import {
   History,
   BarChart3,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  FileText
 } from "lucide-react";
-import { SUBSCRIPTION_PLANS, TOKEN_TOP_UP_PACKAGES, ActionType } from "@/lib/config/pricing";
+import { SUBSCRIPTION_PLANS, ActionType } from "@/lib/config/pricing";
 
 interface TokenInfo {
   userId: string;
@@ -91,7 +91,8 @@ export function TokenUsage({
       add_edit_slide: 'Add/Edit Slide',
       export_presentation: 'Export Presentation',
       generate_analytics: 'Generate Analytics',
-      regenerate_slides: 'Regenerate Slides'
+      regenerate_slides: 'Regenerate Slides',
+      generate_study_notes: 'Generate Study Notes'
     };
     return names[action] || action;
   };
@@ -103,6 +104,7 @@ export function TokenUsage({
       case 'export_presentation': return <Download className="h-4 w-4" />;
       case 'generate_analytics': return <BarChart3 className="h-4 w-4" />;
       case 'regenerate_slides': return <RefreshCw className="h-4 w-4" />;
+      case 'generate_study_notes': return <FileText className="h-4 w-4" />;
       default: return <Zap className="h-4 w-4" />;
     }
   };
@@ -141,10 +143,10 @@ export function TokenUsage({
               <CardTitle>Token Usage</CardTitle>
             </div>
             <div className="flex items-center gap-2">
-              <Badge variant={tokenInfo.subscriptionPlan === 'free' ? 'secondary' : 'primary'}>
-                {planConfig?.name || tokenInfo.subscriptionPlan}
+              <Badge variant={tokenInfo?.subscriptionPlan === 'free' ? 'secondary' : 'primary'}>
+                {planConfig?.name || tokenInfo?.subscriptionPlan}
               </Badge>
-              {tokenInfo.subscriptionPlan !== 'free' && (
+              {tokenInfo?.subscriptionPlan !== 'free' && (
                 <Crown className="h-4 w-4 text-yellow-500" />
               )}
               <div className="p-1">
@@ -184,11 +186,11 @@ export function TokenUsage({
               {/* Token Balance */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="text-center p-4 bg-muted/30 rounded-lg">
-                  <div className="text-2xl font-bold text-primary">{tokenInfo.totalAvailableTokens}</div>
+                  <div className="text-2xl font-bold text-primary">{tokenInfo?.totalAvailableTokens || 0}</div>
                   <div className="text-sm text-muted-foreground">Available Tokens</div>
                 </div>
                 <div className="text-center p-4 bg-muted/30 rounded-lg">
-                  <div className="text-2xl font-bold text-orange-500">{tokenInfo.totalTokensUsed}</div>
+                  <div className="text-2xl font-bold text-orange-500">{tokenInfo?.totalTokensUsed || 0}</div>
                   <div className="text-sm text-muted-foreground">Used This Month</div>
                 </div>
                 <div className="text-center p-4 bg-muted/30 rounded-lg">
@@ -210,13 +212,13 @@ export function TokenUsage({
               />
             </div>
             <div className="text-xs text-muted-foreground">
-              {tokenInfo.currentTokens} / {planConfig?.monthlyTokens || 0} tokens remaining
+              {tokenInfo?.currentTokens || 0} / {planConfig?.monthlyTokens || 0} tokens remaining
             </div>
           </div>
 
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-2">
-            {tokenInfo.subscriptionPlan === 'free' ? (
+            {tokenInfo?.subscriptionPlan === 'free' ? (
               <Button onClick={onUpgrade} className="gap-2">
                 <ArrowUpRight className="h-4 w-4" />
                 Upgrade Plan
@@ -307,7 +309,7 @@ export function TokenUsage({
                   <div className="space-y-2">
                     <h4 className="font-medium">Most Used Actions</h4>
                     <div className="space-y-2">
-                      {usageStats.mostUsedActions.slice(0, 3).map((action, index) => (
+                      {usageStats.mostUsedActions.slice(0, 3).map((action) => (
                         <div key={action.action} className="flex items-center justify-between p-2 bg-muted/30 rounded">
                           <div className="flex items-center gap-2">
                             {getActionIcon(action.action)}

@@ -16,7 +16,7 @@ export default function SignUpPage() {
   const [password, setPassword] = useState('')
   const [name, setName] = useState('')
   const [showPassword, setShowPassword] = useState(false)
-  const [localLoading, setLocalLoading] = useState(false)
+  // const [localLoading] = useState(false)
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
 
@@ -97,7 +97,7 @@ export default function SignUpPage() {
           router.push('/dashboard')
         }, 100)
       }
-    } catch (err) {
+    } catch {
       setError('An unexpected error occurred')
     }
   }

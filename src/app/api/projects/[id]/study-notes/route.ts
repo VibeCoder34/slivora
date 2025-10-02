@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { checkUserTokens, deductTokens } from '@/lib/token-system';
+import { deductTokens } from '@/lib/token-system';
 import { generateStudyNotes } from '@/lib/llm';
 
 export async function GET(

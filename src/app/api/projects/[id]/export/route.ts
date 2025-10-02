@@ -16,19 +16,19 @@ const EXPORT_RATE_LIMIT = {
 /**
  * Get client IP address from request headers
  */
-function getClientIP(request: NextRequest): string {
-  const forwarded = request.headers.get('x-forwarded-for');
-  if (forwarded) {
-    return forwarded.split(',')[0].trim();
-  }
-  
-  const realIP = request.headers.get('x-real-ip');
-  if (realIP) {
-    return realIP;
-  }
-  
-  return 'anon';
-}
+// function getClientIP(request: NextRequest): string {
+//   const forwarded = request.headers.get('x-forwarded-for');
+//   if (forwarded) {
+//     return forwarded.split(',')[0].trim();
+//   }
+//   
+//   const realIP = request.headers.get('x-real-ip');
+//   if (realIP) {
+//     return realIP;
+//   }
+//   
+//   return 'anon';
+// }
 
 /**
  * Create a slug from title for filename
@@ -71,8 +71,8 @@ export async function POST(
       return NextResponse.json(errorResponse, { status: 401 });
     }
     
-    // Get client IP for rate limiting
-    const clientIP = getClientIP(request);
+    // Get client IP for rate limiting (currently unused)
+    // const clientIP = getClientIP(request);
     const rateLimitKey = `exp:${user.id}`;
     
     // Check rate limit
@@ -122,7 +122,7 @@ export async function POST(
     }
     
     // Check if user has enough tokens for export
-    const tokenCheck = await checkUserTokens(user.id, 'export_presentation', projectId);
+    const tokenCheck = await checkUserTokens(user.id, 'export_presentation');
     if (!tokenCheck.hasEnoughTokens) {
       return NextResponse.json({
         error: 'Insufficient tokens',
@@ -137,7 +137,7 @@ export async function POST(
     let slidePlan: SlidePlan;
     try {
       slidePlan = project.slide_plan as SlidePlan;
-    } catch (parseError) {
+    } catch {
       const errorResponse: ErrorResponse = {
         error: 'Invalid slide plan data',
       };

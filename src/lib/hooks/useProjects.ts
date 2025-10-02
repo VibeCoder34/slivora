@@ -1,7 +1,7 @@
 'use client'
 
 import { createClient } from '@/lib/supabase/client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 
 export interface Project {
   id: string
@@ -37,7 +37,7 @@ export function useProjects(userId?: string) {
   const supabase = createClient()
 
   // Fetch all projects for the current user
-  const fetchProjects = async () => {
+  const fetchProjects = useCallback(async () => {
     try {
       console.log('useProjects: Starting to fetch projects')
       setLoading(true)
@@ -128,7 +128,7 @@ export function useProjects(userId?: string) {
       console.log('useProjects: Setting loading to false')
       setLoading(false)
     }
-  }
+  }, [userId, supabase])
 
   // Create a new project with AI generation
   const createProjectWithAI = async (projectData: {
@@ -472,7 +472,7 @@ export function useProjects(userId?: string) {
     if (userId) {
       fetchProjects()
     }
-  }, [userId])
+  }, [userId, fetchProjects])
 
   return {
     projects,

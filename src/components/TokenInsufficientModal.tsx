@@ -41,7 +41,8 @@ export function TokenInsufficientModal({
       add_edit_slide: 'Add/Edit Slide',
       export_presentation: 'Export Presentation',
       generate_analytics: 'Generate Analytics',
-      regenerate_slides: 'Regenerate Slides'
+      regenerate_slides: 'Regenerate Slides',
+      generate_study_notes: 'Generate Study Notes'
     };
     return names[action] || action;
   };
@@ -53,6 +54,7 @@ export function TokenInsufficientModal({
       case 'export_presentation': return <Zap className="h-5 w-5" />;
       case 'generate_analytics': return <Zap className="h-5 w-5" />;
       case 'regenerate_slides': return <Zap className="h-5 w-5" />;
+      case 'generate_study_notes': return <Zap className="h-5 w-5" />;
       default: return <Zap className="h-5 w-5" />;
     }
   };
@@ -63,7 +65,8 @@ export function TokenInsufficientModal({
       add_edit_slide: 'Add new slides or edit existing slide content',
       export_presentation: 'Export your presentation to PowerPoint, PDF, or other formats',
       generate_analytics: 'Generate detailed analytics and insights about your presentation',
-      regenerate_slides: 'Regenerate slides with new AI-generated content'
+      regenerate_slides: 'Regenerate slides with new AI-generated content',
+      generate_study_notes: 'Generate comprehensive study notes from your presentation content'
     };
     return descriptions[action] || 'Perform this action';
   };

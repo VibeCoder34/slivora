@@ -4,7 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { Sparkles, Wand2, FileText, Rocket, Zap, Star, CheckCircle, Users, Clock, Download, ArrowRight, Play, Type, Layers, Presentation } from "lucide-react";
+import { Wand2, FileText, Star, CheckCircle, Download, ArrowRight, Type } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/lib/hooks/useAuth";
@@ -215,19 +215,16 @@ export default function Home() {
           
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
             <StepCard 
-              step="1"
               icon={<Type className="h-6 w-6" />}
               title="Add your idea"
               description="Type a topic or paste your outline."
             />
             <StepCard 
-              step="2"
               icon={<Wand2 className="h-6 w-6" />}
               title="Generate your deck"
               description="Get structured slides with clean bullets and layouts."
             />
             <StepCard 
-              step="3"
               icon={<Download className="h-6 w-6" />}
               title="Export & present"
               description=".pptx download for PowerPoint."
@@ -453,8 +450,7 @@ export default function Home() {
 }
 
 // Step Card Component for How it Works section
-function StepCard({ step, icon, title, description }: { 
-  step: string; 
+function StepCard({ icon, title, description }: { 
   icon: React.ReactNode; 
   title: string; 
   description: string; 
@@ -530,30 +526,30 @@ function FAQItem({ question, answer }: { question: string; answer: string }) {
   );
 }
 
-function Testimonial({ name, role, company, content, rating }: { 
-  name: string; 
-  role: string; 
-  company: string; 
-  content: string; 
-  rating: number; 
-}) {
-  return (
-    <Card>
-      <CardContent className="p-6">
-        <div className="flex items-center gap-1 mb-4">
-          {Array.from({ length: rating }).map((_, i) => (
-            <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-          ))}
-        </div>
-        <p className="text-sm text-muted-foreground mb-4">&ldquo;{content}&rdquo;</p>
-        <div>
-          <div className="font-medium">{name}</div>
-          <div className="text-sm text-muted-foreground">{role} at {company}</div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
+// function Testimonial({ name, role, company, content, rating }: { 
+//   name: string; 
+//   role: string; 
+//   company: string; 
+//   content: string; 
+//   rating: number; 
+// }) {
+//   return (
+//     <Card>
+//       <CardContent className="p-6">
+//         <div className="flex items-center gap-1 mb-4">
+//           {Array.from({ length: rating }).map((_, i) => (
+//             <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+//           ))}
+//         </div>
+//         <p className="text-sm text-muted-foreground mb-4">&ldquo;{content}&rdquo;</p>
+//         <div>
+//           <div className="font-medium">{name}</div>
+//           <div className="text-sm text-muted-foreground">{role} at {company}</div>
+//         </div>
+//       </CardContent>
+//     </Card>
+//   );
+// }
 
 function PricingCard({ name, price, period, description, features, buttonText, popular, href }: {
   name: string;

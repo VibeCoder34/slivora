@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useAuth } from '@/lib/hooks/useAuth'
-import { Loader2, Eye, EyeOff, ArrowLeft, LogIn, CheckCircle, Sparkles } from 'lucide-react'
+import { Loader2, Eye, EyeOff, ArrowLeft, LogIn, Sparkles } from 'lucide-react'
 
 export default function SignInPage() {
   const [email, setEmail] = useState('')
@@ -96,7 +96,7 @@ export default function SignInPage() {
           router.push('/dashboard')
         }, 100)
       }
-    } catch (err) {
+    } catch {
       setError('An unexpected error occurred')
     }
   }
@@ -118,7 +118,7 @@ export default function SignInPage() {
       } else {
         setMessage('Password reset email sent! Check your inbox.')
       }
-    } catch (err) {
+    } catch {
       setError('An unexpected error occurred')
     } finally {
       setLocalLoading(false)

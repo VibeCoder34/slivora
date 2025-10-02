@@ -15,19 +15,19 @@ const GENERATE_RATE_LIMIT = {
 /**
  * Get client IP address from request headers
  */
-function getClientIP(request: NextRequest): string {
-  const forwarded = request.headers.get('x-forwarded-for');
-  if (forwarded) {
-    return forwarded.split(',')[0].trim();
-  }
-  
-  const realIP = request.headers.get('x-real-ip');
-  if (realIP) {
-    return realIP;
-  }
-  
-  return 'anon';
-}
+// function getClientIP(request: NextRequest): string {
+//   const forwarded = request.headers.get('x-forwarded-for');
+//   if (forwarded) {
+//     return forwarded.split(',')[0].trim();
+//   }
+//   
+//   const realIP = request.headers.get('x-real-ip');
+//   if (realIP) {
+//     return realIP;
+//   }
+//   
+//   return 'anon';
+// }
 
 /**
  * POST /api/projects/create-and-generate
@@ -117,8 +117,8 @@ export async function POST(request: NextRequest) {
       }, { status: 403 }); // 403 Forbidden
     }
     
-    // Get client IP for rate limiting
-    const clientIP = getClientIP(request);
+    // Get client IP for rate limiting (currently unused)
+    // const clientIP = getClientIP(request);
     const rateLimitKey = `gen:${user.id}`;
     
     // Check rate limit

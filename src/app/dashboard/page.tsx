@@ -195,7 +195,7 @@ export default function DashboardPage() {
 
   const handleRegenerateProject = async (id: string) => {
     // Check tokens before attempting regeneration
-    const tokenCheck = await checkTokensForAction('regenerate_slides', id)
+    const tokenCheck = await checkTokensForAction('regenerate_slides')
     if (!tokenCheck.hasEnoughTokens) {
       alert(`❌ ${tokenCheck.message}\n\nPlease purchase more tokens or upgrade your plan to continue.`)
       return
@@ -256,7 +256,7 @@ export default function DashboardPage() {
     }
 
     // Check if user has enough tokens
-    const tokenCheck = await checkTokensForAction('export_presentation', id)
+    const tokenCheck = await checkTokensForAction('export_presentation')
     if (!tokenCheck.hasEnoughTokens) {
       setInsufficientModalData({
         actionType: 'export_presentation',

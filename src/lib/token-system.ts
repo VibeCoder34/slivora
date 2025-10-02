@@ -18,8 +18,8 @@ import {
 import { Database } from './supabase/types';
 
 type TokenUsage = Database['public']['Tables']['token_usage']['Row'];
-type TokenTransaction = Database['public']['Tables']['token_transactions']['Row'];
-type User = Database['public']['Tables']['users']['Row'];
+// type TokenTransaction = Database['public']['Tables']['token_transactions']['Row'];
+// type User = Database['public']['Tables']['users']['Row'];
 
 export interface TokenCheckResult {
   hasEnoughTokens: boolean;
@@ -59,8 +59,7 @@ export interface TokenUsageHistory {
  */
 export async function checkUserTokens(
   userId: string, 
-  actionType: ActionType,
-  projectId?: string
+  actionType: ActionType
 ): Promise<TokenCheckResult> {
   try {
     const supabase = await createClient();
@@ -121,7 +120,7 @@ export async function deductTokens(
     const requiredTokens = getActionCost(actionType);
 
     // First check if user has enough tokens
-    const tokenCheck = await checkUserTokens(userId, actionType, projectId);
+    const tokenCheck = await checkUserTokens(userId, actionType);
     if (!tokenCheck.hasEnoughTokens) {
       return {
         success: false,
@@ -247,6 +246,7 @@ export async function getTokenUsageHistory(
       .from('token_usage')
       .select(`
         id,
+        user_id,
         action_type,
         tokens_consumed,
         project_id,
@@ -360,7 +360,7 @@ export async function updateUserSubscription(
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const supabase = await createClient();
-    const planConfig = getPlanConfig(newPlan);
+    // const planConfig = getPlanConfig(newPlan);
 
     const { error } = await supabase
       .from('users')

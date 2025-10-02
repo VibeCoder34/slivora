@@ -72,12 +72,15 @@ export default function ReferencesPage() {
                       <div className="font-medium truncate">{ref.label || ref.url}</div>
                       <div className="text-sm text-muted-foreground truncate">{ref.url}</div>
                     </div>
-                    <Button asChild size="sm" variant="outline">
-                      <a href={ref.url} target="_blank" rel="noreferrer">
-                        <ExternalLink className="h-4 w-4 mr-2" />
-                        Open
-                      </a>
-                    </Button>
+                    <a 
+                      href={ref.url} 
+                      target="_blank" 
+                      rel="noreferrer"
+                      className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3"
+                    >
+                      <ExternalLink className="h-4 w-4 mr-2" />
+                      Open
+                    </a>
                   </li>
                 ))}
               </ul>

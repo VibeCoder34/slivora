@@ -6,7 +6,7 @@ import { useState, useEffect } from 'react'
 
 export default function DebugAuthPage() {
   const { user, loading, signIn, signUp, clearAuthData } = useAuth()
-  const [session, setSession] = useState<any>(null)
+  const [session, setSession] = useState<{user?: {id?: string, email?: string}} | null>(null)
   const [testEmail, setTestEmail] = useState('')
   const [testPassword, setTestPassword] = useState('')
   const [testName, setTestName] = useState('')
@@ -35,7 +35,7 @@ export default function DebugAuthPage() {
     })
 
     return () => subscription.unsubscribe()
-  }, [])
+  }, [supabase.auth])
 
   const handleTestSignUp = async () => {
     const email = testEmail || `test-${Date.now()}@example.com`
@@ -46,7 +46,7 @@ export default function DebugAuthPage() {
     const { data, error } = await signUp(email, password, name)
     
     if (error) {
-      setLogs(prev => [...prev, `Sign up error: ${error.message}`])
+      setLogs(prev => [...prev, `Sign up error: ${error instanceof Error ? error.message : 'Unknown error'}`])
     } else {
       setLogs(prev => [...prev, `Sign up success: ${data?.user?.id}`])
     }
@@ -60,7 +60,7 @@ export default function DebugAuthPage() {
     const { data, error } = await signIn(email, password)
     
     if (error) {
-      setLogs(prev => [...prev, `Sign in error: ${error.message}`])
+      setLogs(prev => [...prev, `Sign in error: ${error instanceof Error ? error.message : 'Unknown error'}`])
     } else {
       setLogs(prev => [...prev, `Sign in success: ${data?.user?.id}`])
     }
@@ -152,19 +152,9 @@ export default function DebugAuthPage() {
               Clear Auth Data
             </button>
             <button
-              onClick={async () => {
-                setLogs(prev => [...prev, 'Triggering fallback user creation...'])
-                await triggerFallback()
-                setLogs(prev => [...prev, 'Fallback triggered'])
-              }}
-              className="px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600"
-            >
-              Trigger Fallback
-            </button>
-            <button
               onClick={() => {
                 setLogs(prev => [...prev, 'Checking auth state...'])
-                debugAuthState()
+                console.log('Auth state:', { user, loading, session })
                 setLogs(prev => [...prev, 'Auth state logged to console'])
               }}
               className="px-4 py-2 bg-indigo-500 text-white rounded hover:bg-indigo-600"

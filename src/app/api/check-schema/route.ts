@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const supabase = await createClient();
     
@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
 
     if (columnError) {
       // If the function doesn't exist, try a different approach
-      const { data: tableInfo, error: tableError } = await supabase
+      const { error: tableError } = await supabase
         .from('projects')
         .select('slide_plan')
         .limit(1);

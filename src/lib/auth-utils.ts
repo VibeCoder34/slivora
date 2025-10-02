@@ -35,7 +35,9 @@ export function clearAuthStorage() {
 export function isTokenError(error: unknown): boolean {
   if (!error) return false
   
-  const message = error.message || error.toString()
+  const message = (error && typeof error === 'object' && 'message' in error) 
+    ? String((error as { message: unknown }).message)
+    : String(error)
   return message.includes('Refresh Token') || 
          message.includes('Invalid') || 
          message.includes('expired') ||

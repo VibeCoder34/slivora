@@ -21,7 +21,7 @@ import { getTopUpPackage, getPlanConfig } from '@/lib/config/pricing';
  * GET /api/tokens
  * Get user's token information, usage history, and statistics
  */
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
